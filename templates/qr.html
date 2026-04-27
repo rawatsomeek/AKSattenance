@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKS Hospitality — Office QR Gate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:    #c9a84c;
+      --gold-lt: #e8d08a;
+      --dark:    #0d0d0d;
+      --card:    #161616;
+      --border:  rgba(201,168,76,0.25);
+      --text:    #f0ece3;
+      --muted:   #9a9185;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* subtle radial glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 40%,
+        rgba(201,168,76,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+
+    .brand-tagline {
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    .qr-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      box-shadow:
+        0 0 0 1px rgba(201,168,76,0.08),
+        0 24px 60px rgba(0,0,0,0.6);
+    }
+
+    .qr-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .qr-frame {
+      position: relative;
+      width: 240px;
+      height: 240px;
+    }
+
+    /* corner accents */
+    .qr-frame::before,
+    .qr-frame::after {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--gold);
+      border-style: solid;
+      z-index: 2;
+    }
+    .qr-frame::before { top: -4px; left: -4px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+    .qr-frame::after  { bottom: -4px; right: -4px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+
+    .qr-frame .corner-tr,
+    .qr-frame .corner-bl {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--gold);
+      border-style: solid;
+      z-index: 2;
+    }
+    .corner-tr { top: -4px; right: -4px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+    .corner-bl { bottom: -4px; left: -4px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+
+    #qrimg {
+      width: 240px;
+      height: 240px;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px;
+      display: block;
+      transition: opacity 0.3s;
+    }
+
+    #qrimg.loading { opacity: 0.3; }
+
+    .timer-row {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+    }
+
+    .ring {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid rgba(201,168,76,0.15);
+      border-top-color: var(--gold);
+      animation: spin 1s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .count-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--gold-lt);
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+
+    <div class="brand-name">AKS Hospitality</div>
+    <div class="brand-tagline">Journey that awakens the soul</div>
+
+    <div class="qr-card">
+      <div class="qr-label">Scan to mark attendance</div>
+
+      <div class="qr-frame">
+        <span class="corner-tr"></span>
+        <span class="corner-bl"></span>
+        <img id="qrimg" alt="QR Code" />
+      </div>
+
+      <div class="timer-row">
+        <div class="ring"></div>
+        <span>Refreshing in</span>
+        <span class="count-num" id="count">20</span>
+        <span>sec</span>
+      </div>
+    </div>
+
+    <div class="footer-note">QR expires every 20 seconds · Office use only</div>
+
+  </div>
+
+  <script>
+    // ── Config ────────────────────────────────────────────────────────────────
+    const BACKEND_BASE   = "const BACKEND_BASE = "http://192.168.1.7:5001";";          // empty = same origin; or "http://localhost:5000"
+    const ATTENDANCE_URL = BACKEND_BASE + "/attendance";
+    const TOKEN_API      = BACKEND_BASE + "/generate-token";
+    const QR_SERVICE     = "https://quickchart.io/qr?size=240&text=";
+
+    let countdown = 20;
+    let refreshing = false;
+
+    // ── Load QR ───────────────────────────────────────────────────────────────
+    async function loadQR() {
+      if (refreshing) return;
+      refreshing = true;
+
+      const img = document.getElementById("qrimg");
+      img.classList.add("loading");
+
+      try {
+        const res   = await fetch(TOKEN_API);
+        const data  = await res.json();
+        const token = data.token;
+
+        const fullUrl = ATTENDANCE_URL + "?token=" + token;
+        const qrUrl   = QR_SERVICE + encodeURIComponent(fullUrl);
+
+        img.onload  = () => img.classList.remove("loading");
+        img.onerror = () => img.classList.remove("loading");
+        img.src     = qrUrl;
+
+      } catch (err) {
+        console.error("Token fetch error:", err);
+        img.classList.remove("loading");
+      }
+
+      countdown  = 20;
+      refreshing = false;
+      document.getElementById("count").innerText = countdown;
+    }
+
+    // ── Countdown tick ────────────────────────────────────────────────────────
+    setInterval(() => {
+      countdown--;
+      document.getElementById("count").innerText = Math.max(0, countdown);
+      if (countdown <= 0) loadQR();
+    }, 1000);
+
+    // ── First load ────────────────────────────────────────────────────────────
+    loadQR();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKS Hospitality — Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:    #c9a84c;
+      --gold-lt: #e8d08a;
+      --dark:    #0d0d0d;
+      --card:    #161616;
+      --card2:   #1e1e1e;
+      --border:  rgba(201,168,76,0.2);
+      --text:    #f0ece3;
+      --muted:   #9a9185;
+      --blue:    #4a90d9;
+      --err:     #e05656;
+      --ok:      #56c97a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 30%,
+        rgba(201,168,76,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ── Card ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.55);
+      animation: fadeUp 0.6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55rem;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+    }
+    .tagline {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+    .live-time {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 18px 0;
+    }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 16px; }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--card2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="date"]:focus,
+    select:focus {
+      border-color: var(--gold);
+    }
+
+    /* color scheme for date input */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.6);
+      cursor: pointer;
+    }
+
+    /* custom select arrow */
+    .select-wrap {
+      position: relative;
+    }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold);
+      pointer-events: none;
+      font-size: 0.9rem;
+    }
+
+    /* ── Camera Box ── */
+    #cameraBox {
+      display: none;
+      margin-top: 4px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 10px;
+      background: #000;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+    }
+
+    .cam-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.04em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold) 0%, #a87a28 100%);
+      color: #000;
+      margin-top: 8px;
+    }
+
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+      flex: 1;
+      font-size: 0.85rem;
+    }
+
+    /* photo preview */
+    #photoPreview {
+      display: none;
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Error ── */
+    #error {
+      min-height: 22px;
+      text-align: center;
+      font-size: 0.84rem;
+      color: var(--err);
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    /* ── Loader overlay ── */
+    #loader {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(13,13,13,0.88);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    #loader.active { display: flex; }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(201,168,76,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loader-text {
+      font-size: 0.88rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Success overlay ── */
+    #successScreen {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--dark);
+      z-index: 10000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 40px;
+      animation: fadeUp 0.5s ease both;
+    }
+    #successScreen.active { display: flex; }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(86,201,122,0.12);
+      border: 2px solid var(--ok);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+    }
+
+    .success-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--text);
+    }
+    .success-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Loader ── -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loader-text">Submitting attendance…</div>
+  </div>
+
+  <!-- ── Success screen ── -->
+  <div id="successScreen">
+    <div class="success-icon">✔</div>
+    <div class="success-title">Response Recorded</div>
+    <div class="success-sub">You may close this page.</div>
+  </div>
+
+  <!-- ── Main card ── -->
+  <div class="card">
+
+    <div class="header">
+      <div class="brand">AKS Hospitality</div>
+      <div class="tagline">Journey that awakens the soul</div>
+      <div class="live-time" id="liveTime">—</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- DATE -->
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="date">
+    </div>
+
+    <!-- AGENT -->
+    <div class="field">
+      <label>Agent Name</label>
+      <div class="select-wrap">
+        <select id="agent">
+          <option value="">— Select Agent —</option>
+          {% for ag in agents %}
+          <option value="{{ ag }}">{{ ag }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- ACTION -->
+    <div class="field">
+      <label>Action</label>
+      <div class="select-wrap">
+        <select id="action" onchange="handleActionChange()">
+          <option value="LOGIN">LOGIN</option>
+          <option value="BREAK">BREAK</option>
+          <option value="RESUME">RESUME</option>
+          <option value="LOGOUT">LOGOUT</option>
+          <option value="LEAVE">LEAVE</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CAMERA BOX (LOGIN only) -->
+    <div id="cameraBox" class="field">
+      <label>Live Photo <span style="color:var(--gold)">(required for LOGIN)</span></label>
+      <video id="video" autoplay playsinline muted></video>
+      <img id="photoPreview" alt="Captured photo">
+      <div class="cam-btns">
+        <button class="btn btn-secondary" type="button" onclick="startCamera()">▶ Start Camera</button>
+        <button class="btn btn-secondary" type="button" onclick="capturePhoto()">📸 Capture</button>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="btn btn-primary" type="button" onclick="submitAttendance()">
+      Submit Attendance
+    </button>
+
+    <div id="error"></div>
+
+  </div>
+
+  <script>
+    // ── Session token injected by Flask ──────────────────────────────────────
+    const SESSION_TOKEN = "{{ session_token }}";
+    const BACKEND_BASE  = "";    // same origin
+
+    let capturedPhoto = "";
+    let cameraStream  = null;
+
+    // ── Live time ─────────────────────────────────────────────────────────────
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("liveTime").innerText =
+        now.toLocaleDateString("en-IN", { weekday:"short", day:"2-digit", month:"short", year:"numeric" })
+        + "  |  "
+        + now.toLocaleTimeString("en-IN");
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // ── Init on load ──────────────────────────────────────────────────────────
+    window.addEventListener("load", () => {
+      const today = new Date().toISOString().split("T")[0];
+      const di    = document.getElementById("date");
+      di.value = today;
+      di.min   = today;
+      di.max   = today;
+      handleActionChange();
+    });
+
+    // ── Action change handler ─────────────────────────────────────────────────
+    function handleActionChange() {
+      const action   = document.getElementById("action").value;
+      const camBox   = document.getElementById("cameraBox");
+      const di       = document.getElementById("date");
+      const today    = new Date().toISOString().split("T")[0];
+
+      if (action === "LOGIN") {
+        camBox.style.display = "block";
+        di.value = today;
+        di.min   = today;
+        di.max   = today;
+      } else if (action === "LEAVE") {
+        camBox.style.display = "none";
+        stopCamera(); capturedPhoto = "";
+        di.removeAttribute("min");
+        di.removeAttribute("max");
+        di.value = today;
+      } else {
+        camBox.style.display = "none";
+        stopCamera(); capturedPhoto = "";
+        di.value = today;
+        di.min   = today;
+        di.max   = today;
+      }
+
+      document.getElementById("error").innerText = "";
+    }
+
+    // ── Camera helpers ────────────────────────────────────────────────────────
+    function startCamera() {
+      const video = document.getElementById("video");
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          video.play();
+          document.getElementById("photoPreview").style.display = "none";
+        })
+        .catch(() => alert("Camera permission required"));
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+    }
+
+    function capturePhoto() {
+      const video  = document.getElementById("video");
+      const canvas = document.createElement("canvas");
+      canvas.width  = video.videoWidth  || 320;
+      canvas.height = video.videoHeight || 240;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      capturedPhoto = canvas.toDataURL("image/jpeg", 0.75);
+
+      const preview = document.getElementById("photoPreview");
+      preview.src = capturedPhoto;
+      preview.style.display = "block";
+
+      stopCamera();
+      document.getElementById("video").style.display = "none";
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    async function submitAttendance() {
+      const error  = document.getElementById("error");
+      const loader = document.getElementById("loader");
+
+      error.innerText = "";
+
+      if (!SESSION_TOKEN) {
+        alert("Session expired. Please scan QR again.");
+        return;
+      }
+
+      const agent  = document.getElementById("agent").value.trim();
+      const action = document.getElementById("action").value;
+      const date   = document.getElementById("date").value;
+
+      if (!agent) { error.innerText = "❌ Please select an agent"; return; }
+      if (action === "LOGIN" && !capturedPhoto) {
+        error.innerText = "❌ Live photo is mandatory for LOGIN";
+        return;
+      }
+
+      loader.classList.add("active");
+
+      try {
+        const res = await fetch(BACKEND_BASE + "/save-attendance", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agent,
+            action,
+            date,
+            token: SESSION_TOKEN,
+            photo: capturedPhoto,
+          }),
+        });
+
+        const data = await res.json();
+        loader.classList.remove("active");
+
+        if (data.status === "ERROR") {
+          error.innerText = data.message;
+        } else {
+          document.getElementById("successScreen").classList.add("active");
+          stopCamera();
+        }
+
+      } catch (err) {
+        loader.classList.remove("active");
+        error.innerText = "❌ Network error — please try again";
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+</html>

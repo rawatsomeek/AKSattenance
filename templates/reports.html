@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKS Hospitality — Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:    #c9a84c;
+      --gold-lt: #e8d08a;
+      --dark:    #0d0d0d;
+      --card:    #161616;
+      --card2:   #1a1a1a;
+      --border:  rgba(201,168,76,0.2);
+      --text:    #f0ece3;
+      --muted:   #9a9185;
+      --ok:      #56c97a;
+      --err:     #e05656;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      padding: 32px 20px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%,
+        rgba(201,168,76,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--gold);
+    }
+    .brand small {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      display: block;
+    }
+
+    .export-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 9px 18px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--card2);
+      color: var(--gold-lt);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: rgba(201,168,76,0.1); }
+
+    /* ── Tabs ── */
+    .tabs {
+      max-width: 1200px;
+      margin: 0 auto 24px;
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 10px 24px;
+      font-size: 0.8rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+    }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* ── Table container ── */
+    .table-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    thead tr {
+      background: rgba(201,168,76,0.08);
+    }
+    th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* Day type badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+    .badge-full    { background: rgba(86,201,122,0.15); color: #56c97a; }
+    .badge-half    { background: rgba(255,193,7,0.15);  color: #ffc107; }
+    .badge-absent  { background: rgba(224,86,86,0.15);  color: #e05656; }
+    .badge-approval{ background: rgba(100,160,255,0.12);color: #64a0ff; }
+    .badge-late    { background: rgba(255,140,0,0.15);  color: #ff8c00; }
+    .badge-ok      { background: rgba(86,201,122,0.1);  color: #56c97a; }
+
+    /* Section hidden */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 48px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      AKS Hospitality
+      <small>Attendance Reports</small>
+    </div>
+    <div class="export-btns">
+      <a href="/export/daily"   class="btn">⬇ Daily Excel</a>
+      <a href="/export/monthly" class="btn">⬇ Monthly Excel</a>
+      <a href="/"               class="btn">🔄 QR Display</a>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('daily',   this)">Daily Report</div>
+    <div class="tab"        onclick="showTab('monthly', this)">Monthly Summary</div>
+  </div>
+
+  <!-- Daily table -->
+  <div id="daily" class="section active">
+    <div class="table-wrap">
+      {% if daily %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Agent</th>
+            <th>Login</th>
+            <th>Logout</th>
+            <th>Break (min)</th>
+            <th>Total Hours</th>
+            <th>Day Type</th>
+            <th>Login Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in daily %}
+          <tr>
+            <td>{{ row.DATE }}</td>
+            <td><strong>{{ row.AGENT }}</strong></td>
+            <td>{{ row.LOGIN_TIME[:16]  if row.LOGIN_TIME  else '—' }}</td>
+            <td>{{ row.LOGOUT_TIME[:16] if row.LOGOUT_TIME else '—' }}</td>
+            <td>{{ row.BREAK_MINUTES }}</td>
+            <td>{{ row.TOTAL_LOGIN_HOURS }}</td>
+            <td>
+              {% if row.DAY_TYPE == 'FULL DAY' %}
+                <span class="badge badge-full">FULL DAY</span>
+              {% elif row.DAY_TYPE == 'HALF DAY' %}
+                <span class="badge badge-half">HALF DAY</span>
+              {% elif row.DAY_TYPE == 'ABSENT' %}
+                <span class="badge badge-absent">ABSENT</span>
+              {% elif row.DAY_TYPE == 'SUBJECT TO MANAGEMENT APPROVAL' %}
+                <span class="badge badge-approval">APPROVAL</span>
+              {% else %}
+                {{ row.DAY_TYPE or '—' }}
+              {% endif %}
+            </td>
+            <td>
+              {% if row.LOGIN_STATUS == 'LATE LOGIN' %}
+                <span class="badge badge-late">LATE</span>
+              {% elif row.LOGIN_STATUS == 'OK' %}
+                <span class="badge badge-ok">OK</span>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">No attendance data yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Monthly table -->
+  <div id="monthly" class="section">
+    <div class="table-wrap">
+      {% if monthly %}
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Agent</th>
+            <th>Total Hours</th>
+            <th>Days Present</th>
+            <th>Avg Hrs/Day</th>
+            <th>Leaves</th>
+            <th>Break Min</th>
+            <th>Full Days</th>
+            <th>Half Days</th>
+            <th>Absent</th>
+            <th>Approval</th>
+            <th>Avg Login</th>
+            <th>Avg Logout</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in monthly %}
+          <tr>
+            <td>{{ row.MONTH }}</td>
+            <td><strong>{{ row.AGENT }}</strong></td>
+            <td>{{ row.TOTAL_WORKING_HOURS }}</td>
+            <td>{{ row.DAYS_PRESENT }}</td>
+            <td>{{ row.AVG_HOURS_PER_DAY }}</td>
+            <td>{{ row.LEAVES }}</td>
+            <td>{{ row.BREAK_MINUTES }}</td>
+            <td><span class="badge badge-full">{{ row.FULL_DAYS }}</span></td>
+            <td><span class="badge badge-half">{{ row.HALF_DAYS }}</span></td>
+            <td><span class="badge badge-absent">{{ row.ABSENT_DAYS }}</span></td>
+            <td><span class="badge badge-approval">{{ row.SUBJECT_TO_APPROVAL_DAYS }}</span></td>
+            <td>{{ row.AVG_LOGIN_TIME  or '—' }}</td>
+            <td>{{ row.AVG_LOGOUT_TIME or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">No monthly data yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    function showTab(name, el) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById(name).classList.add("active");
+      el.classList.add("active");
+    }
+  </script>
+
+</body>
+</html>
