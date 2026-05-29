@@ -215,8 +215,8 @@
 
   <script>
     // ── Config ────────────────────────────────────────────────────────────────
-    // NETWORK_BASE auto-detected from Flask at render time — no hardcoding needed
-    const NETWORK_BASE   = "http://{{ server_ip }}:{{ server_port }}";
+    // Base URL injected by Flask — local IP on LAN, Render public URL in production
+    const NETWORK_BASE   = "{{ server_base }}";
     const ATTENDANCE_URL = NETWORK_BASE + "/attendance";
     const TOKEN_API      = "/generate-token";   // same-origin — always reachable
 

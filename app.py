@@ -45,6 +45,15 @@ def get_local_ip() -> str:
     except Exception:
         return "127.0.0.1"
 
+
+def get_base_url() -> str:
+    """Return the public base URL — Render's URL in production, local IP otherwise."""
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+    if render_url:
+        return render_url
+    port = int(os.environ.get("PORT", 5001))
+    return f"http://{get_local_ip()}:{port}"
+
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
 TOKEN_VALIDITY_SEC   = 20
@@ -531,8 +540,7 @@ def filter_daily_rows(range_type: str, from_date: str = "", to_date: str = "") -
 
 @app.route("/")
 def index():
-    server_ip = get_local_ip()
-    return render_template("qr.html", server_ip=server_ip, server_port=5001)
+    return render_template("qr.html", server_base=get_base_url())
 
 
 @app.route("/generate-token")
@@ -867,5 +875,6 @@ def admin_export():
 
 if __name__ == "__main__":
     ensure_csv()
-    print("🚀 AKS Attendance System running → http://localhost:5000")
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    print(f"🚀 AKS Attendance System running → {get_base_url()}")
+    app.run(debug=True, host="0.0.0.0", port=port)
