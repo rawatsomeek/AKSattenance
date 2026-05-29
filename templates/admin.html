@@ -7,13 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:   #c9a84c; --gold-lt: #e8d08a;
-      --dark:   #0d0d0d; --card:    #161616;
-      --card2:  #1e1e1e; --card3:   #242424;
-      --border: rgba(201,168,76,0.2);
-      --text:   #f0ece3; --muted:   #9a9185;
-      --green:  #56c97a; --red:     #e05656;
-      --orange: #f0a830; --blue:    #64a0ff;
+      --gold:   #b8923f; --gold-lt: #c9a84c;
+      --dark:   #f8f5f0; --card:    #ffffff;
+      --card2:  #f3efe8; --card3:   #ece7dd;
+      --border: rgba(180,130,30,0.2);
+      --text:   #1a1510; --muted:   #7a6f5e;
+      --green:  #2d9e4a; --red:     #c44040;
+      --orange: #d4860e; --blue:    #3a7abf;
       --sidebar-w: 220px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,13 +32,13 @@
       padding: 40px 36px;
       width: 340px;
       text-align: center;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
     }
     .login-box h1 { font-family:'Playfair Display',serif; color:var(--gold); font-size:1.6rem; }
     .login-box p  { font-size:0.75rem; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin:4px 0 28px; }
     .login-box input {
       width:100%; padding:12px 14px; background:var(--card2);
-      border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+      border:1px solid rgba(0,0,0,0.12); border-radius:10px;
       color:var(--text); font-size:0.95rem; font-family:inherit;
       outline:none; transition:border-color .2s; margin-bottom:14px;
     }
@@ -79,7 +79,7 @@
       transition:all .15s; border-left:3px solid transparent;
       user-select:none;
     }
-    .sb-item:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+    .sb-item:hover { color:var(--text); background:rgba(0,0,0,0.04); }
     .sb-item.active { color:var(--gold); border-left-color:var(--gold); background:rgba(201,168,76,0.07); }
     .sb-icon { font-size:1rem; width:20px; text-align:center; }
 
@@ -155,7 +155,7 @@
     .badge-break  { background:rgba(240,168,48,.15); color:var(--orange); }
     .badge-out    { background:rgba(224,86,86,.15); color:var(--red); }
     .badge-leave  { background:rgba(100,160,255,.12); color:var(--blue); }
-    .badge-notin  { background:rgba(255,255,255,.05); color:var(--muted); }
+    .badge-notin  { background:rgba(0,0,0,.06); color:var(--muted); }
 
     .card-meta { font-size:0.75rem; color:var(--muted); margin-bottom:8px; }
     .timeline  { font-size:0.72rem; color:var(--muted); display:flex; flex-direction:column; gap:3px; }
@@ -181,7 +181,7 @@
     .agent-list-box h3 { font-size:.8rem; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:14px; }
     .agent-row {
       display:flex; align-items:center; justify-content:space-between;
-      padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04);
+      padding:10px 0; border-bottom:1px solid rgba(0,0,0,.07);
     }
     .agent-row:last-child { border-bottom:none; }
     .agent-row-name { font-size:.9rem; font-weight:500; }
@@ -195,7 +195,7 @@
     .add-form { display:flex; gap:10px; margin-top:18px; }
     .add-form input {
       flex:1; padding:10px 14px; background:var(--card2);
-      border:1px solid rgba(255,255,255,.08); border-radius:9px;
+      border:1px solid rgba(0,0,0,.12); border-radius:9px;
       color:var(--text); font-family:inherit; font-size:.9rem; outline:none;
       transition:border-color .2s;
     }
@@ -215,11 +215,11 @@
       white-space:nowrap; border-bottom:1px solid var(--border);
     }
     td {
-      padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.04);
+      padding:10px 14px; border-bottom:1px solid rgba(0,0,0,.06);
       white-space:nowrap; color:var(--text);
     }
     tr:last-child td { border-bottom:none; }
-    tr:hover td { background:rgba(255,255,255,.02); }
+    tr:hover td { background:rgba(0,0,0,.03); }
 
     .empty { text-align:center; padding:48px; color:var(--muted); font-size:.88rem; }
 
@@ -254,12 +254,12 @@
     .range-form label { font-size:.7rem; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; }
     .range-form input[type=date] {
       padding:10px 12px; background:var(--card2);
-      border:1px solid rgba(255,255,255,.08); border-radius:9px;
+      border:1px solid rgba(0,0,0,.12); border-radius:9px;
       color:var(--text); font-family:inherit; font-size:.9rem;
       outline:none; transition:border-color .2s;
     }
     .range-form input[type=date]:focus { border-color:var(--gold); }
-    .range-form input[type=date]::-webkit-calendar-picker-indicator { filter:invert(.6); }
+    .range-form input[type=date]::-webkit-calendar-picker-indicator { filter:invert(0); }
 
     /* ── STATS ROW ── */
     .stats-row {
@@ -324,7 +324,7 @@
     /* ── RECORD CARDS ── */
     .rec-card {
       background:var(--card2); border-radius:10px; padding:14px;
-      margin-bottom:10px; border:1px solid rgba(255,255,255,.04);
+      margin-bottom:10px; border:1px solid rgba(0,0,0,.07);
     }
     .rec-card-hdr { display:flex; justify-content:space-between; align-items:flex-start; }
     .rec-meta { font-size:.75rem; color:var(--muted); }
@@ -337,7 +337,7 @@
       background:var(--card); border-radius:6px; padding:8px; margin-top:6px;
       font-size:.62rem; color:var(--muted); word-break:break-all;
       max-height:72px; overflow-y:auto; font-family:monospace; user-select:all;
-      border:1px solid rgba(255,255,255,.05);
+      border:1px solid rgba(0,0,0,.09);
     }
 
     /* ── ADD ENTRY FORM ── */
@@ -349,7 +349,7 @@
     .add-entry-field label { font-size:.68rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
     .add-entry-field select,
     .add-entry-field input {
-      background:var(--card); border:1px solid rgba(255,255,255,.08);
+      background:var(--card); border:1px solid rgba(0,0,0,.12);
       color:var(--text); border-radius:8px; padding:8px 12px;
       font-family:inherit; font-size:.85rem; outline:none; transition:border-color .2s;
     }
@@ -965,7 +965,7 @@ async function selectCalDate(dateStr) {
 
   const addForm = `
     <div class="add-entry-form">
-      <div style="font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Add Entry</div>
+      <div style="font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;font-weight:600;">Add Entry</div>
       <div class="add-entry-row">
         <div class="add-entry-field">
           <label>Action</label>
@@ -996,11 +996,13 @@ async function selectCalDate(dateStr) {
         <summary style="font-size:.72rem;color:var(--muted);cursor:pointer;letter-spacing:.06em;">📎 Base64 / File Path</summary>
         <div class="b64-box" id="b64-${rid}">/photos/${r.photo}</div>
         <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-          <button onclick="loadB64('${r.photo}','${rid}')"
-            style="font-size:.7rem;padding:4px 12px;background:var(--card2);border:1px solid var(--border);color:var(--gold-lt);border-radius:5px;cursor:pointer;font-family:inherit;">
+          <button data-photo="${r.photo}" data-rid="${rid}"
+            onclick="loadB64(this.dataset.photo,this.dataset.rid)"
+            style="font-size:.7rem;padding:4px 12px;background:var(--card2);border:1px solid var(--border);color:var(--gold);border-radius:5px;cursor:pointer;font-family:inherit;">
             Load Full Base64
           </button>
-          <button onclick="copyTxt(document.getElementById('b64-${rid}').innerText)"
+          <button data-rid="${rid}"
+            onclick="copyTxt(document.getElementById('b64-'+this.dataset.rid).innerText)"
             style="font-size:.7rem;padding:4px 12px;background:var(--card2);border:1px solid var(--border);color:var(--muted);border-radius:5px;cursor:pointer;font-family:inherit;">
             Copy
           </button>
@@ -1018,8 +1020,10 @@ async function selectCalDate(dateStr) {
           </div>
           <div style="display:flex;gap:6px;">
             <button class="del-btn" style="color:var(--gold-lt);border-color:rgba(201,168,76,.3);"
-              onclick="showEditForm('${rid}','${calAgent}','${r.timestamp}','${r.action}','${r.leave_date||''}')">Edit</button>
-            <button class="del-btn" onclick="deleteRecord('${calAgent}','${r.timestamp}')">Delete</button>
+              data-rid="${rid}" data-agent="${calAgent}" data-ts="${r.timestamp}" data-action="${r.action}" data-leave="${r.leave_date||''}"
+              onclick="showEditForm(this.dataset.rid,this.dataset.agent,this.dataset.ts,this.dataset.action,this.dataset.leave)">Edit</button>
+            <button class="del-btn" data-agent="${calAgent}" data-ts="${r.timestamp}"
+              onclick="deleteRecord(this.dataset.agent,this.dataset.ts)">Delete</button>
           </div>
         </div>
         ${photoBlock}

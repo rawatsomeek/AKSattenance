@@ -7,12 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:   #c9a84c; --gold-lt: #e8d08a;
-      --dark:   #0d0d0d; --card:    #161616;
-      --card2:  #1e1e1e; --border:  rgba(201,168,76,0.2);
-      --text:   #f0ece3; --muted:   #9a9185;
-      --green:  #56c97a; --red:     #e05656;
-      --orange: #f0a830; --blue:    #64a0ff;
+      --gold:   #b8923f; --gold-lt: #c9a84c;
+      --dark:   #f8f5f0; --card:    #ffffff;
+      --card2:  #f3efe8; --border:  rgba(180,130,30,0.2);
+      --text:   #1a1510; --muted:   #7a6f5e;
+      --green:  #2d9e4a; --red:     #c44040;
+      --orange: #d4860e; --blue:    #3a7abf;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,7 +21,7 @@
     }
     body::before {
       content: ''; position: fixed; inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(201,168,76,0.06) 0%, transparent 65%);
+      background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(184,146,63,0.10) 0%, transparent 65%);
       pointer-events: none;
     }
 
@@ -76,7 +76,7 @@
     .badge-break  { background:rgba(240,168,48,.15);  color:var(--orange); }
     .badge-out    { background:rgba(224,86,86,.15);   color:var(--red); }
     .badge-leave  { background:rgba(100,160,255,.12); color:var(--blue); }
-    .badge-notin  { background:rgba(255,255,255,.06); color:var(--muted); }
+    .badge-notin  { background:rgba(0,0,0,.06); color:var(--muted); }
     .login-since  { font-size:.78rem; color:var(--muted); }
 
     /* Timeline */
@@ -88,7 +88,7 @@
     .tl-row {
       display:flex; align-items:center; gap:12px;
       background:var(--card); border-radius:10px; padding:10px 14px;
-      border:1px solid rgba(255,255,255,.04);
+      border:1px solid rgba(0,0,0,.07);
     }
     .tl-time  { font-size:.78rem; color:var(--gold-lt); min-width:44px; font-family:monospace; }
     .tl-action{ font-size:.88rem; font-weight:600; }
@@ -108,7 +108,7 @@
     table { width:100%; border-collapse:collapse; font-size:.8rem; }
     thead tr { background:rgba(201,168,76,.07); }
     th { padding:10px 12px; text-align:left; font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); white-space:nowrap; border-bottom:1px solid var(--border); }
-    td { padding:9px 12px; border-bottom:1px solid rgba(255,255,255,.04); white-space:nowrap; }
+    td { padding:9px 12px; border-bottom:1px solid rgba(0,0,0,.06); white-space:nowrap; }
     tr:last-child td { border-bottom:none; }
 
     .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.65rem; font-weight:700; }

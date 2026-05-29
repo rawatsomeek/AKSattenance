@@ -28,7 +28,7 @@ import os
 import io
 import socket
 import base64
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 import pandas as pd
 import qrcode
 
@@ -53,6 +53,8 @@ def get_base_url() -> str:
         return render_url
     port = int(os.environ.get("PORT", 5001))
     return f"http://{get_local_ip()}:{port}"
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
@@ -579,7 +581,7 @@ def save_attendance():
         mark_token_used(token)
 
     leave_date = date_val if new_action == "LEAVE" else ""
-    now_ts     = datetime.now()
+    now_ts     = datetime.now(IST).replace(tzinfo=None)
 
     photo_file = ""
     if photo and new_action == "LOGIN":
@@ -820,7 +822,7 @@ def admin_add_record():
     data       = request.get_json(force=True)
     agent      = str(data.get("agent", "")).strip().upper()
     action     = str(data.get("action", "")).upper()
-    timestamp  = data.get("timestamp", datetime.now().isoformat())
+    timestamp  = data.get("timestamp", datetime.now(IST).replace(tzinfo=None).isoformat())
     leave_date = data.get("leave_date", "")
     photo      = data.get("photo", "")
 

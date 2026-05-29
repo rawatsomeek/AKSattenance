@@ -7,17 +7,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:    #c9a84c;
-      --gold-lt: #e8d08a;
-      --dark:    #0d0d0d;
-      --card:    #161616;
-      --card2:   #1e1e1e;
-      --border:  rgba(201,168,76,0.2);
-      --text:    #f0ece3;
-      --muted:   #9a9185;
-      --blue:    #4a90d9;
-      --err:     #e05656;
-      --ok:      #56c97a;
+      --gold:    #b8923f;
+      --gold-lt: #c9a84c;
+      --dark:    #f8f5f0;
+      --card:    #ffffff;
+      --card2:   #f3efe8;
+      --border:  rgba(180,130,30,0.2);
+      --text:    #1a1510;
+      --muted:   #7a6f5e;
+      --blue:    #3a7abf;
+      --err:     #c44040;
+      --ok:      #2d9e4a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,7 +37,7 @@
       content: '';
       position: fixed; inset: 0;
       background: radial-gradient(ellipse 60% 50% at 50% 30%,
-        rgba(201,168,76,0.06) 0%, transparent 65%);
+        rgba(184,146,63,0.1) 0%, transparent 65%);
       pointer-events: none;
     }
 
@@ -51,7 +51,7 @@
       padding: 32px 28px;
       width: 100%;
       max-width: 420px;
-      box-shadow: 0 30px 70px rgba(0,0,0,0.55);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
       animation: fadeUp 0.6s ease both;
     }
 
@@ -110,7 +110,7 @@
       width: 100%;
       padding: 12px 14px;
       background: var(--card2);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(0,0,0,0.12);
       border-radius: 10px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
@@ -128,7 +128,7 @@
 
     /* color scheme for date input */
     input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(0.6);
+      filter: invert(0);
       cursor: pointer;
     }
 
@@ -184,7 +184,7 @@
     .btn-secondary {
       background: var(--card2);
       color: var(--text);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(0,0,0,0.12);
       flex: 1;
       font-size: 0.85rem;
     }
@@ -259,7 +259,7 @@
     #loader {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(13,13,13,0.88);
+      background: rgba(248,245,240,0.88);
       z-index: 9999;
       flex-direction: column;
       align-items: center;
