@@ -711,7 +711,17 @@ def api_delete_agent(name):
         return jsonify({"status": "ERROR", "message": "Agent not found"}), 404
     agents.remove(name)
     save_agents(agents)
-    return jsonify({"status": "OK", "agents": load_agents()})
+
+    # Hard-delete all records for this agent from CSV
+    rows     = read_all_rows()
+    new_rows = [r for r in rows if r["AGENT"].strip().upper() != name]
+    with open(DATA_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["TIMESTAMP","AGENT","ACTION","LEAVE_DATE","PHOTO","SOURCE"])
+        writer.writeheader()
+        writer.writerows(new_rows)
+
+    return jsonify({"status": "OK", "agents": load_agents(),
+                    "deleted_records": len(rows) - len(new_rows)})
 
 
 @app.route("/admin/live-status")
@@ -839,6 +849,86 @@ def admin_delete_record(agent, timestamp):
         writer.writeheader()
         writer.writerows(new_rows)
     return jsonify({"status": "OK"})
+
+
+@app.route("/admin/records/<agent>/<path:timestamp>", methods=["PUT"])
+def admin_edit_record(agent, timestamp):
+    data       = request.get_json(force=True)
+    agent      = agent.upper()
+    new_action = str(data.get("action", "")).upper()
+    new_date   = data.get("date",       "")   # YYYY-MM-DD
+    new_time   = data.get("time",       "")   # HH:MM
+    new_leave  = data.get("leave_date", "")
+
+    rows  = read_all_rows()
+    found = False
+    new_rows = []
+    for row in rows:
+        if row["AGENT"].strip().upper() == agent and row["TIMESTAMP"] == timestamp:
+            found = True
+            old_date = timestamp[:10]
+            old_time = timestamp[11:16]
+            nd = new_date or old_date
+            nt = new_time or old_time
+            row["TIMESTAMP"]  = f"{nd}T{nt}:00"
+            row["ACTION"]     = new_action or row["ACTION"]
+            row["LEAVE_DATE"] = new_leave
+        new_rows.append(row)
+
+    if not found:
+        return jsonify({"status": "ERROR", "message": "Record not found"}), 404
+
+    with open(DATA_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["TIMESTAMP","AGENT","ACTION","LEAVE_DATE","PHOTO","SOURCE"])
+        writer.writeheader()
+        writer.writerows(new_rows)
+    return jsonify({"status": "OK"})
+
+
+@app.route("/my-attendance")
+def my_attendance_page():
+    return render_template("my_attendance.html", agents=load_agents())
+
+
+@app.route("/agent-data/<agent>")
+def agent_data(agent):
+    agent_upper = agent.strip().upper()
+    today       = date.today()
+    all_rows    = read_all_rows()
+
+    today_timeline = []
+    for row in all_rows:
+        if row["AGENT"].strip().upper() != agent_upper:
+            continue
+        try:
+            ts = datetime.fromisoformat(row["TIMESTAMP"])
+            if ts.date() == today:
+                today_timeline.append({
+                    "time":   ts.strftime("%H:%M"),
+                    "action": row["ACTION"].upper(),
+                    "photo":  row.get("PHOTO", ""),
+                })
+        except Exception:
+            pass
+
+    last_action = today_timeline[-1]["action"] if today_timeline else "NOT IN"
+
+    daily_calc   = generate_daily_calc()
+    mm, yyyy     = today.strftime("%m"), str(today.year)
+    monthly_rows = [r for r in daily_calc
+                    if r["AGENT"].strip().upper() == agent_upper
+                    and r["DATE"].split("-")[1] == mm
+                    and r["DATE"].split("-")[2] == yyyy]
+
+    summary = generate_period_summary(monthly_rows)
+
+    return jsonify({
+        "agent":            agent_upper,
+        "today_status":     last_action,
+        "today_timeline":   today_timeline,
+        "monthly_rows":     monthly_rows,
+        "monthly_summary":  summary[0] if summary else {},
+    })
 
 
 @app.route("/admin/photo-base64/<path:filename>")

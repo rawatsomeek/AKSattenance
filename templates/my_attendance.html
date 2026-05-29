@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKS Hospitality — My Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:   #c9a84c; --gold-lt: #e8d08a;
+      --dark:   #0d0d0d; --card:    #161616;
+      --card2:  #1e1e1e; --border:  rgba(201,168,76,0.2);
+      --text:   #f0ece3; --muted:   #9a9185;
+      --green:  #56c97a; --red:     #e05656;
+      --orange: #f0a830; --blue:    #64a0ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: var(--dark); color: var(--text);
+      font-family: 'DM Sans', sans-serif; padding: 24px 16px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(201,168,76,0.06) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .page { max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* Header */
+    .brand { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--gold); text-align:center; }
+    .tagline { font-size:.68rem; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-top:3px; margin-bottom:28px; }
+
+    /* Agent selection */
+    .select-title { font-size:.75rem; color:var(--muted); letter-spacing:.18em; text-transform:uppercase; text-align:center; margin-bottom:16px; }
+    .agent-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .agent-btn {
+      background:var(--card); border:1px solid var(--border); border-radius:14px;
+      padding:18px 12px; cursor:pointer; font-family:inherit; transition:all .15s;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+    }
+    .agent-btn:hover { border-color:var(--gold); background:rgba(201,168,76,.07); }
+    .agent-initials {
+      width:48px; height:48px; border-radius:50%;
+      background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.3);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--gold);
+    }
+    .agent-btn-name { font-size:.85rem; font-weight:600; color:var(--text); }
+
+    /* Back button */
+    .back-btn {
+      background:none; border:1px solid var(--border); color:var(--muted);
+      border-radius:8px; padding:7px 14px; font-family:inherit; font-size:.8rem;
+      cursor:pointer; margin-bottom:20px; transition:all .15s;
+    }
+    .back-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+    /* Status card */
+    .status-card {
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:20px; margin-bottom:16px; border-left:4px solid var(--muted);
+      transition:border-left-color .3s;
+    }
+    .status-card.in     { border-left-color:var(--green); }
+    .status-card.break  { border-left-color:var(--orange); }
+    .status-card.out    { border-left-color:var(--red); }
+    .status-card.leave  { border-left-color:var(--blue); }
+
+    .agent-greeting { font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:10px; }
+    .status-badge {
+      display:inline-block; padding:5px 14px; border-radius:20px;
+      font-size:.72rem; font-weight:700; letter-spacing:.1em; margin-bottom:8px;
+    }
+    .badge-in     { background:rgba(86,201,122,.15); color:var(--green); }
+    .badge-break  { background:rgba(240,168,48,.15);  color:var(--orange); }
+    .badge-out    { background:rgba(224,86,86,.15);   color:var(--red); }
+    .badge-leave  { background:rgba(100,160,255,.12); color:var(--blue); }
+    .badge-notin  { background:rgba(255,255,255,.06); color:var(--muted); }
+    .login-since  { font-size:.78rem; color:var(--muted); }
+
+    /* Timeline */
+    .section-title {
+      font-size:.7rem; color:var(--muted); letter-spacing:.18em;
+      text-transform:uppercase; margin-bottom:10px; margin-top:20px;
+    }
+    .timeline { display:flex; flex-direction:column; gap:6px; }
+    .tl-row {
+      display:flex; align-items:center; gap:12px;
+      background:var(--card); border-radius:10px; padding:10px 14px;
+      border:1px solid rgba(255,255,255,.04);
+    }
+    .tl-time  { font-size:.78rem; color:var(--gold-lt); min-width:44px; font-family:monospace; }
+    .tl-action{ font-size:.88rem; font-weight:600; }
+    .tl-empty { font-size:.82rem; color:var(--muted); text-align:center; padding:12px; }
+
+    /* Stats grid */
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .stat-card {
+      background:var(--card); border:1px solid var(--border); border-radius:12px;
+      padding:14px; text-align:center;
+    }
+    .stat-num   { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--gold-lt); }
+    .stat-label { font-size:.65rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-top:3px; }
+
+    /* Records table */
+    .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); margin-top:0; }
+    table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    thead tr { background:rgba(201,168,76,.07); }
+    th { padding:10px 12px; text-align:left; font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); white-space:nowrap; border-bottom:1px solid var(--border); }
+    td { padding:9px 12px; border-bottom:1px solid rgba(255,255,255,.04); white-space:nowrap; }
+    tr:last-child td { border-bottom:none; }
+
+    .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.65rem; font-weight:700; }
+    .b-full     { background:rgba(86,201,122,.15);  color:var(--green); }
+    .b-half     { background:rgba(255,193,7,.15);   color:#ffc107; }
+    .b-absent   { background:rgba(224,86,86,.15);   color:var(--red); }
+    .b-approval { background:rgba(100,160,255,.12); color:var(--blue); }
+
+    .empty { text-align:center; padding:32px; color:var(--muted); font-size:.85rem; }
+
+    .live-time-bar { text-align:center; font-size:.72rem; color:var(--muted); margin-bottom:20px; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .fade { animation:fadeUp .4s ease both; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="brand">AKS Hospitality</div>
+  <div class="tagline">My Attendance</div>
+  <div class="live-time-bar" id="liveTime">—</div>
+
+  <!-- ── Agent Selection ── -->
+  <div id="agentSelect">
+    <div class="select-title">Who are you?</div>
+    <div class="agent-grid">
+      {% for agent in agents %}
+      <button class="agent-btn" onclick="selectAgent('{{ agent }}')">
+        <div class="agent-initials">{{ agent[0] }}</div>
+        <div class="agent-btn-name">{{ agent }}</div>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="dashboard" style="display:none" class="fade">
+    <button class="back-btn" onclick="goBack()">← Change Agent</button>
+
+    <!-- Status -->
+    <div class="status-card" id="statusCard">
+      <div class="agent-greeting" id="agentGreeting">—</div>
+      <div class="status-badge" id="statusBadge">—</div>
+      <div class="login-since" id="loginSince"></div>
+    </div>
+
+    <!-- Today's timeline -->
+    <div class="section-title">Today's Activity</div>
+    <div class="timeline" id="todayTimeline"></div>
+
+    <!-- Monthly stats -->
+    <div class="section-title" id="monthLabel">This Month</div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Monthly records -->
+    <div class="section-title" style="margin-top:20px">This Month's Records</div>
+    <div class="table-wrap" id="recordsTable"></div>
+  </div>
+
+</div>
+
+<script>
+  // Live clock
+  function tick() {
+    const now = new Date();
+    document.getElementById("liveTime").innerText =
+      now.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})
+      + "  |  " + now.toLocaleTimeString("en-IN");
+  }
+  tick(); setInterval(tick, 1000);
+
+  function goBack() {
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("agentSelect").style.display = "block";
+  }
+
+  async function selectAgent(agent) {
+    document.getElementById("agentSelect").style.display = "none";
+    document.getElementById("dashboard").style.display   = "block";
+
+    const res  = await fetch(`/agent-data/${agent}`);
+    const data = await res.json();
+    renderDashboard(data);
+  }
+
+  function renderDashboard(data) {
+    // Status card
+    const sc    = document.getElementById("statusCard");
+    const badge = document.getElementById("statusBadge");
+    const s     = data.today_status;
+
+    document.getElementById("agentGreeting").innerText = `Hi, ${data.agent} 👋`;
+
+    let cls = "", badgeCls = "badge-notin", label = "NOT IN";
+    if (s === "LOGIN" || s === "RESUME") { cls = "in";    badgeCls = "badge-in";    label = s === "RESUME" ? "IN (RESUMED)" : "LOGGED IN ✅"; }
+    else if (s === "BREAK")              { cls = "break";  badgeCls = "badge-break";  label = "ON BREAK ☕"; }
+    else if (s === "LOGOUT")             { cls = "out";    badgeCls = "badge-out";    label = "LOGGED OUT"; }
+    else if (s === "LEAVE")              { cls = "leave";  badgeCls = "badge-leave";  label = "ON LEAVE"; }
+
+    sc.className    = `status-card ${cls}`;
+    badge.className = `status-badge ${badgeCls}`;
+    badge.innerText = label;
+
+    const loginEntry = data.today_timeline.find(t => t.action === "LOGIN");
+    document.getElementById("loginSince").innerText = loginEntry ? `Login: ${loginEntry.time}` : "";
+
+    // Timeline
+    const tl = document.getElementById("todayTimeline");
+    if (!data.today_timeline.length) {
+      tl.innerHTML = `<div class="tl-empty">No activity recorded today</div>`;
+    } else {
+      tl.innerHTML = data.today_timeline.map(t =>
+        `<div class="tl-row"><span class="tl-time">${t.time}</span><span class="tl-action">${t.action}</span></div>`
+      ).join("");
+    }
+
+    // Month label
+    const now = new Date();
+    const mn  = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById("monthLabel").innerText = `${mn[now.getMonth()]} ${now.getFullYear()}`;
+
+    // Stats
+    const ms = data.monthly_summary;
+    document.getElementById("statsGrid").innerHTML = `
+      <div class="stat-card"><div class="stat-num">${ms.TOTAL_HOURS || 0}</div><div class="stat-label">Total Hours</div></div>
+      <div class="stat-card"><div class="stat-num">${ms.FULL_DAYS  || 0}</div><div class="stat-label">Full Days</div></div>
+      <div class="stat-card"><div class="stat-num">${ms.HALF_DAYS  || 0}</div><div class="stat-label">Half Days</div></div>
+      <div class="stat-card"><div class="stat-num">${ms.ABSENT_DAYS|| 0}</div><div class="stat-label">Absent Days</div></div>
+    `;
+
+    // Records table
+    const rt = document.getElementById("recordsTable");
+    if (!data.monthly_rows.length) {
+      rt.innerHTML = `<div class="empty">No records this month</div>`;
+    } else {
+      const dayBadge = t => {
+        if (!t) return "—";
+        if (t === "FULL DAY") return `<span class="badge b-full">FULL</span>`;
+        if (t === "HALF DAY") return `<span class="badge b-half">HALF</span>`;
+        if (t === "ABSENT")   return `<span class="badge b-absent">ABSENT</span>`;
+        if (t === "SUBJECT TO MANAGEMENT APPROVAL") return `<span class="badge b-approval">APPROVAL</span>`;
+        return t;
+      };
+      rt.innerHTML = `<table>
+        <thead><tr><th>Date</th><th>Login</th><th>Logout</th><th>Hours</th><th>Day</th></tr></thead>
+        <tbody>
+          ${data.monthly_rows.map(r => `<tr>
+            <td>${r.DATE}</td>
+            <td>${r.LOGIN_TIME  ? r.LOGIN_TIME.substring(11,16)  : "—"}</td>
+            <td>${r.LOGOUT_TIME ? r.LOGOUT_TIME.substring(11,16) : "—"}</td>
+            <td>${r.TOTAL_LOGIN_HOURS || "—"}</td>
+            <td>${dayBadge(r.DAY_TYPE)}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`;
+    }
+  }
+</script>
+</body>
+</html>

@@ -765,7 +765,7 @@ async function addAgent() {
 }
 
 async function deleteAgent(name) {
-  if (!confirm(`Delete agent "${name}"? This won't remove their past records.`)) return;
+  if (!confirm(`Delete agent "${name}"?\n\nThis will permanently delete ALL their attendance records too.`)) return;
   const res  = await fetch("/admin/agents/" + name, {method: "DELETE"});
   const data = await res.json();
   if (data.status === "OK") renderAgentList(data.agents);
@@ -1008,22 +1008,92 @@ async function selectCalDate(dateStr) {
       </details>` : '<span style="font-size:.72rem;color:var(--muted)">No photo</span>';
 
     return `<div class="rec-card">
-      <div class="rec-card-hdr">
-        <div>
-          <span class="rec-meta">${r.timestamp.substring(11,19)}</span>
-          <span class="rec-action">${r.action}</span>
-          ${r.leave_date ? `<span style="margin-left:8px;font-size:.75rem;color:var(--blue)">Leave: ${r.leave_date}</span>` : ""}
-          <span style="margin-left:8px;font-size:.65rem;color:var(--muted)">[${r.source||"SYSTEM"}]</span>
+      <div id="disp-${rid}">
+        <div class="rec-card-hdr">
+          <div>
+            <span class="rec-meta">${r.timestamp.substring(11,19)}</span>
+            <span class="rec-action">${r.action}</span>
+            ${r.leave_date ? `<span style="margin-left:8px;font-size:.75rem;color:var(--blue)">Leave: ${r.leave_date}</span>` : ""}
+            <span style="margin-left:8px;font-size:.65rem;color:var(--muted)">[${r.source||"SYSTEM"}]</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="del-btn" style="color:var(--gold-lt);border-color:rgba(201,168,76,.3);"
+              onclick="showEditForm('${rid}','${calAgent}','${r.timestamp}','${r.action}','${r.leave_date||''}')">Edit</button>
+            <button class="del-btn" onclick="deleteRecord('${calAgent}','${r.timestamp}')">Delete</button>
+          </div>
         </div>
-        <button class="del-btn" onclick="deleteRecord('${calAgent}','${r.timestamp}')">Delete</button>
+        ${photoBlock}
       </div>
-      ${photoBlock}
     </div>`;
   }).join("");
 
   panel.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px">
     <div style="font-family:'Playfair Display',serif;color:var(--gold);font-size:1rem;margin-bottom:14px">${calAgent} — ${dateStr}</div>
     ${recs}${addForm}</div>`;
+}
+
+function showEditForm(rid, agent, timestamp, action, leaveDate) {
+  const date = timestamp.substring(0, 10);
+  const time = timestamp.substring(11, 16);
+  const actions = ["LOGIN","BREAK","RESUME","LOGOUT","LEAVE"];
+  const opts = actions.map(a => `<option ${a===action?"selected":""}>${a}</option>`).join("");
+
+  document.getElementById("disp-" + rid).innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:.72rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;">Edit Entry</div>
+      <div class="add-entry-row">
+        <div class="add-entry-field">
+          <label>Date</label>
+          <input type="date" id="ed-date-${rid}" value="${date}">
+        </div>
+        <div class="add-entry-field">
+          <label>Time</label>
+          <input type="time" id="ed-time-${rid}" value="${time}">
+        </div>
+        <div class="add-entry-field">
+          <label>Action</label>
+          <select id="ed-action-${rid}" onchange="toggleLeaveField('${rid}',this.value)">${opts}</select>
+        </div>
+      </div>
+      <div id="ed-leave-wrap-${rid}" style="display:${action==='LEAVE'?'block':'none'}">
+        <div class="add-entry-field">
+          <label>Leave Date</label>
+          <input type="date" id="ed-leave-${rid}" value="${leaveDate}">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-gold" style="padding:8px 18px;font-size:.8rem;"
+          onclick="saveEdit('${rid}','${agent}','${timestamp}')">Save</button>
+        <button class="btn" style="padding:8px 18px;font-size:.8rem;"
+          onclick="selectCalDate('${calSelectedDate}')">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function toggleLeaveField(rid, action) {
+  document.getElementById("ed-leave-wrap-" + rid).style.display = action === "LEAVE" ? "block" : "none";
+}
+
+async function saveEdit(rid, agent, oldTimestamp) {
+  const newDate   = document.getElementById("ed-date-"   + rid).value;
+  const newTime   = document.getElementById("ed-time-"   + rid).value;
+  const newAction = document.getElementById("ed-action-" + rid).value;
+  const leaveEl   = document.getElementById("ed-leave-"  + rid);
+  const newLeave  = leaveEl ? leaveEl.value : "";
+
+  const res  = await fetch(`/admin/records/${agent}/${encodeURIComponent(oldTimestamp)}`, {
+    method:  "PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({action: newAction, date: newDate, time: newTime, leave_date: newLeave})
+  });
+  const data = await res.json();
+  if (data.status === "OK") {
+    calAgentDates = (await (await fetch(`/admin/agent-records/${calAgent}`)).json()).dates || {};
+    renderCalendar();
+    selectCalDate(calSelectedDate);
+  } else {
+    alert(data.message || "Error saving");
+  }
 }
 
 async function loadB64(photoFile, elemId) {
