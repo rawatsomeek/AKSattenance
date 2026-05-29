@@ -153,14 +153,6 @@
       margin-top: 4px;
     }
 
-    video {
-      width: 100%;
-      border-radius: 10px;
-      background: #000;
-      aspect-ratio: 4/3;
-      object-fit: cover;
-    }
-
     .cam-btns {
       display: flex;
       gap: 8px;
@@ -201,10 +193,57 @@
     #photoPreview {
       display: none;
       width: 100%;
+      max-height: 220px;
+      object-fit: cover;
       border-radius: 10px;
       margin-top: 10px;
       border: 1px solid var(--border);
     }
+
+    .photo-confirm {
+      font-size: 0.78rem;
+      color: var(--ok);
+      margin-top: 6px;
+      display: none;
+    }
+
+    /* session countdown bar */
+    .session-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+    .session-bar.warning { color: #f0a830; }
+    .session-bar.danger  { color: var(--err); }
+
+    /* expired overlay */
+    #expiredScreen {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--dark);
+      z-index: 10001;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 40px;
+    }
+    #expiredScreen.active { display: flex; }
+    .expired-icon {
+      font-size: 3rem;
+    }
+    .expired-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--err);
+    }
+    .expired-sub { font-size: 0.85rem; color: var(--muted); }
 
     /* ── Error ── */
     #error {
@@ -286,6 +325,13 @@
 </head>
 <body>
 
+  <!-- ── Expired screen ── -->
+  <div id="expiredScreen">
+    <div class="expired-icon">⏱</div>
+    <div class="expired-title">Session Expired</div>
+    <div class="expired-sub">Please scan the QR code again.</div>
+  </div>
+
   <!-- ── Loader ── -->
   <div id="loader">
     <div class="spinner"></div>
@@ -306,6 +352,9 @@
       <div class="brand">AKS Hospitality</div>
       <div class="tagline">Journey that awakens the soul</div>
       <div class="live-time" id="liveTime">—</div>
+      <div class="session-bar" id="sessionBar">
+        Session expires in <strong id="sessionCount">20</strong>s
+      </div>
     </div>
 
     <div class="divider"></div>
@@ -346,12 +395,14 @@
     <!-- CAMERA BOX (LOGIN only) -->
     <div id="cameraBox" class="field">
       <label>Live Photo <span style="color:var(--gold)">(required for LOGIN)</span></label>
-      <video id="video" autoplay playsinline muted></video>
+      <input type="file" id="photoInput" accept="image/*" capture="user"
+             style="display:none" onchange="handlePhotoSelect(this)">
       <img id="photoPreview" alt="Captured photo">
       <div class="cam-btns">
-        <button class="btn btn-secondary" type="button" onclick="startCamera()">▶ Start Camera</button>
-        <button class="btn btn-secondary" type="button" onclick="capturePhoto()">📸 Capture</button>
+        <button class="btn btn-secondary" type="button"
+                onclick="document.getElementById('photoInput').click()" id="camBtn">📸 Open Camera</button>
       </div>
+      <div class="photo-confirm" id="photoConfirm">✔ Photo captured</div>
     </div>
 
     <!-- SUBMIT -->
@@ -366,10 +417,30 @@
   <script>
     // ── Session token injected by Flask ──────────────────────────────────────
     const SESSION_TOKEN = "{{ session_token }}";
-    const BACKEND_BASE  = "";    // same origin
+    const BACKEND_BASE  = "";
 
     let capturedPhoto = "";
-    let cameraStream  = null;
+
+    // ── Session countdown (20 seconds) ───────────────────────────────────────
+    let sessionSec = 20;
+    const sessionBar   = document.getElementById("sessionBar");
+    const sessionCount = document.getElementById("sessionCount");
+
+    const sessionTimer = setInterval(() => {
+      sessionSec--;
+      sessionCount.innerText = Math.max(0, sessionSec);
+
+      if (sessionSec <= 5) {
+        sessionBar.className = "session-bar danger";
+      } else if (sessionSec <= 10) {
+        sessionBar.className = "session-bar warning";
+      }
+
+      if (sessionSec <= 0) {
+        clearInterval(sessionTimer);
+        document.getElementById("expiredScreen").classList.add("active");
+      }
+    }, 1000);
 
     // ── Live time ─────────────────────────────────────────────────────────────
     function updateTime() {
@@ -394,67 +465,55 @@
 
     // ── Action change handler ─────────────────────────────────────────────────
     function handleActionChange() {
-      const action   = document.getElementById("action").value;
-      const camBox   = document.getElementById("cameraBox");
-      const di       = document.getElementById("date");
-      const today    = new Date().toISOString().split("T")[0];
+      const action = document.getElementById("action").value;
+      const camBox = document.getElementById("cameraBox");
+      const di     = document.getElementById("date");
+      const today  = new Date().toISOString().split("T")[0];
 
       if (action === "LOGIN") {
         camBox.style.display = "block";
-        di.value = today;
-        di.min   = today;
-        di.max   = today;
+        di.value = today; di.min = today; di.max = today;
       } else if (action === "LEAVE") {
         camBox.style.display = "none";
-        stopCamera(); capturedPhoto = "";
+        capturedPhoto = "";
+        resetPhotoUI();
+        // LEAVE: retrospective — all past + future dates allowed
         di.removeAttribute("min");
         di.removeAttribute("max");
         di.value = today;
       } else {
         camBox.style.display = "none";
-        stopCamera(); capturedPhoto = "";
-        di.value = today;
-        di.min   = today;
-        di.max   = today;
+        capturedPhoto = "";
+        resetPhotoUI();
+        // All other actions: only today
+        di.value = today; di.min = today; di.max = today;
       }
 
       document.getElementById("error").innerText = "";
     }
 
-    // ── Camera helpers ────────────────────────────────────────────────────────
-    function startCamera() {
-      const video = document.getElementById("video");
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => {
-          cameraStream = stream;
-          video.srcObject = stream;
-          video.play();
-          document.getElementById("photoPreview").style.display = "none";
-        })
-        .catch(() => alert("Camera permission required"));
-    }
-
-    function stopCamera() {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = null;
-      }
-    }
-
-    function capturePhoto() {
-      const video  = document.getElementById("video");
-      const canvas = document.createElement("canvas");
-      canvas.width  = video.videoWidth  || 320;
-      canvas.height = video.videoHeight || 240;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      capturedPhoto = canvas.toDataURL("image/jpeg", 0.75);
-
+    function resetPhotoUI() {
       const preview = document.getElementById("photoPreview");
-      preview.src = capturedPhoto;
-      preview.style.display = "block";
+      preview.src = "";
+      preview.style.display = "none";
+      document.getElementById("photoConfirm").style.display = "none";
+      document.getElementById("camBtn").innerText = "📸 Open Camera";
+      document.getElementById("photoInput").value = "";
+    }
 
-      stopCamera();
-      document.getElementById("video").style.display = "none";
+    // ── Photo file input handler ──────────────────────────────────────────────
+    function handlePhotoSelect(input) {
+      if (!input.files || !input.files[0]) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        capturedPhoto = e.target.result;
+        const preview = document.getElementById("photoPreview");
+        preview.src = capturedPhoto;
+        preview.style.display = "block";
+        document.getElementById("photoConfirm").style.display = "block";
+        document.getElementById("camBtn").innerText = "📸 Retake Photo";
+      };
+      reader.readAsDataURL(input.files[0]);
     }
 
     // ── Submit ────────────────────────────────────────────────────────────────
@@ -463,11 +522,6 @@
       const loader = document.getElementById("loader");
 
       error.innerText = "";
-
-      if (!SESSION_TOKEN) {
-        alert("Session expired. Please scan QR again.");
-        return;
-      }
 
       const agent  = document.getElementById("agent").value.trim();
       const action = document.getElementById("action").value;
@@ -485,13 +539,7 @@
         const res = await fetch(BACKEND_BASE + "/save-attendance", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            agent,
-            action,
-            date,
-            token: SESSION_TOKEN,
-            photo: capturedPhoto,
-          }),
+          body: JSON.stringify({ agent, action, date, token: SESSION_TOKEN, photo: capturedPhoto }),
         });
 
         const data = await res.json();
@@ -500,10 +548,9 @@
         if (data.status === "ERROR") {
           error.innerText = data.message;
         } else {
+          clearInterval(sessionTimer);
           document.getElementById("successScreen").classList.add("active");
-          stopCamera();
         }
-
       } catch (err) {
         loader.classList.remove("active");
         error.innerText = "❌ Network error — please try again";

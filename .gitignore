@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+photos/
+daily_calc.json
+monthly_summary.json
+agent_colors.json

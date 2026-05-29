@@ -26,17 +26,33 @@ import csv
 import json
 import os
 import io
+import socket
+import base64
 from datetime import datetime, date
 import pandas as pd
+import qrcode
 
 app = Flask(__name__)
 CORS(app)
+
+def get_local_ip() -> str:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
 TOKEN_VALIDITY_SEC   = 20
 DATA_FILE            = "attendance_data.csv"
 COLORS_FILE          = "agent_colors.json"
+AGENTS_FILE          = "agents.json"
+ADMIN_PASSWORD       = "aks@2025"
+PHOTOS_DIR           = os.path.join(os.path.dirname(os.path.abspath(__file__)), "photos")
 
 # ─── IN-MEMORY TOKEN CACHE ──────────────────────────────────────────────────────
 token_cache: dict[str, float] = {}   # token → expiry_timestamp
@@ -86,6 +102,21 @@ def _purge_expired():
         del token_cache[t]
 
 
+# ─── AGENT HELPERS ─────────────────────────────────────────────────────────────
+
+def load_agents() -> list:
+    if os.path.exists(AGENTS_FILE):
+        with open(AGENTS_FILE, "r") as f:
+            return json.load(f)
+    save_agents(AGENT_LIST)
+    return list(AGENT_LIST)
+
+
+def save_agents(agents: list):
+    with open(AGENTS_FILE, "w") as f:
+        json.dump(sorted(set(a.upper() for a in agents)), f, indent=2)
+
+
 # ─── DATA HELPERS ──────────────────────────────────────────────────────────────
 
 def ensure_csv():
@@ -110,6 +141,21 @@ def read_all_rows() -> list[dict]:
         for r in reader:
             rows.append(r)
     return rows
+
+
+def save_photo(agent: str, timestamp: str, photo_b64: str) -> str:
+    os.makedirs(PHOTOS_DIR, exist_ok=True)
+    if "," in photo_b64:
+        photo_b64 = photo_b64.split(",", 1)[1]
+    try:
+        img_data = base64.b64decode(photo_b64)
+    except Exception:
+        return ""
+    safe_ts  = timestamp.replace(":", "-").replace(".", "-")
+    filename = f"{agent}_{safe_ts}.jpg"
+    with open(os.path.join(PHOTOS_DIR, filename), "wb") as f:
+        f.write(img_data)
+    return filename
 
 
 def get_agent_color(agent: str) -> str:
@@ -375,11 +421,118 @@ def generate_monthly_summary(daily_rows: list[dict]) -> list[dict]:
     return summary
 
 
+# ─── PERIOD SUMMARY (agent-level aggregation for any date range) ───────────────
+
+def generate_period_summary(daily_rows: list[dict]) -> list[dict]:
+    mapping: dict[str, dict] = {}
+
+    for r in daily_rows:
+        agent = r["AGENT"].strip()
+        if not agent:
+            continue
+        if agent not in mapping:
+            mapping[agent] = {
+                "agent": agent, "hours": 0, "breaks": 0,
+                "full": 0, "half": 0, "absent": 0, "approval": 0,
+                "login_sum": 0, "login_count": 0,
+                "logout_sum": 0, "logout_count": 0,
+            }
+        m = mapping[agent]
+        hours     = float(r["TOTAL_LOGIN_HOURS"]) if r["TOTAL_LOGIN_HOURS"] != "" else 0
+        break_min = float(r["BREAK_MINUTES"])     if r["BREAK_MINUTES"]     != "" else 0
+        day_type  = r["DAY_TYPE"].strip().upper()
+        m["hours"] += hours
+        m["breaks"] += break_min
+        if   day_type == "FULL DAY":                         m["full"]     += 1
+        elif day_type == "HALF DAY":                         m["half"]     += 1
+        elif day_type == "ABSENT":                           m["absent"]   += 1
+        elif day_type == "SUBJECT TO MANAGEMENT APPROVAL":  m["approval"] += 1
+        if r["LOGIN_TIME"]:
+            try:
+                lt = datetime.fromisoformat(r["LOGIN_TIME"])
+                m["login_sum"]   += lt.hour * 60 + lt.minute
+                m["login_count"] += 1
+            except Exception: pass
+        if r["LOGOUT_TIME"]:
+            try:
+                lo = datetime.fromisoformat(r["LOGOUT_TIME"])
+                m["logout_sum"]   += lo.hour * 60 + lo.minute
+                m["logout_count"] += 1
+            except Exception: pass
+
+    def fmt_time(mins, count):
+        if not count: return ""
+        avg = round(mins / count)
+        return f"{avg // 60:02d}:{avg % 60:02d}"
+
+    result = []
+    for m in mapping.values():
+        dp = m["full"]
+        result.append({
+            "AGENT":            m["agent"],
+            "TOTAL_HOURS":      round(m["hours"], 2),
+            "DAYS_PRESENT":     dp,
+            "FULL_DAYS":        m["full"],
+            "HALF_DAYS":        m["half"],
+            "ABSENT_DAYS":      m["absent"],
+            "APPROVAL_DAYS":    m["approval"],
+            "BREAK_MINUTES":    round(m["breaks"], 2),
+            "AVG_HOURS_PER_DAY": round(m["hours"] / dp, 2) if dp else 0,
+            "AVG_LOGIN_TIME":   fmt_time(m["login_sum"],  m["login_count"]),
+            "AVG_LOGOUT_TIME":  fmt_time(m["logout_sum"], m["logout_count"]),
+        })
+    result.sort(key=lambda x: x["AGENT"])
+    return result
+
+
+def filter_daily_rows(range_type: str, from_date: str = "", to_date: str = "") -> list[dict]:
+    daily_calc = generate_daily_calc()
+    today      = date.today()
+
+    if range_type == "today":
+        target = today.strftime("%d-%m-%Y")
+        return [r for r in daily_calc if r["DATE"] == target]
+
+    if range_type == "monthly":
+        mm, yyyy = today.strftime("%m"), str(today.year)
+        return [r for r in daily_calc
+                if r["DATE"].split("-")[1] == mm and r["DATE"].split("-")[2] == yyyy]
+
+    if range_type == "quarterly":
+        q        = (today.month - 1) // 3
+        q_months = {str(q * 3 + i + 1).zfill(2) for i in range(3)}
+        yyyy     = str(today.year)
+        return [r for r in daily_calc
+                if r["DATE"].split("-")[1] in q_months and r["DATE"].split("-")[2] == yyyy]
+
+    if range_type == "yearly":
+        yyyy = str(today.year)
+        return [r for r in daily_calc if r["DATE"].split("-")[2] == yyyy]
+
+    if range_type == "custom" and from_date and to_date:
+        try:
+            fd, td = (datetime.strptime(from_date, "%Y-%m-%d").date(),
+                      datetime.strptime(to_date,   "%Y-%m-%d").date())
+            out = []
+            for r in daily_calc:
+                try:
+                    rd = datetime.strptime(r["DATE"], "%d-%m-%Y").date()
+                    if fd <= rd <= td:
+                        out.append(r)
+                except Exception: pass
+            return out
+        except Exception:
+            return []
+
+    return []
+
+
 # ─── FLASK ROUTES ──────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
-    return render_template("qr.html")
+    server_ip = get_local_ip()
+    return render_template("qr.html", server_ip=server_ip, server_port=5001)
 
 
 @app.route("/generate-token")
@@ -393,7 +546,7 @@ def attendance_page():
     token = request.args.get("token", "")
     if not token or not is_token_valid(token):
         return "<h2 style='font-family:sans-serif;color:red;text-align:center;margin-top:40px'>❌ Access Denied — Please scan QR again</h2>", 403
-    return render_template("attendance.html", session_token=token, agents=AGENT_LIST)
+    return render_template("attendance.html", session_token=token, agents=load_agents())
 
 
 @app.route("/save-attendance", methods=["POST"])
@@ -418,13 +571,18 @@ def save_attendance():
         mark_token_used(token)
 
     leave_date = date_val if new_action == "LEAVE" else ""
+    now_ts     = datetime.now()
+
+    photo_file = ""
+    if photo and new_action == "LOGIN":
+        photo_file = save_photo(agent, now_ts.isoformat(), photo)
 
     append_row([
-        datetime.now().isoformat(),
+        now_ts.isoformat(),
         agent,
         new_action,
         leave_date,
-        "[photo]" if photo else "",   # Don't store full base64 in CSV — save separately if needed
+        photo_file,
         "OFFICE_NETWORK",
     ])
 
@@ -481,6 +639,228 @@ def export_monthly():
 def raw_data():
     rows = read_all_rows()
     return jsonify(rows)
+
+
+@app.route("/photos/<path:filename>")
+def serve_photo(filename):
+    return send_file(os.path.join(PHOTOS_DIR, filename))
+
+
+@app.route("/qr-image")
+def qr_image():
+    text = request.args.get("text", "")
+    if not text:
+        return "Missing text", 400
+    qr = qrcode.QRCode(box_size=6, border=2)
+    qr.add_data(text)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
+
+
+# ─── ADMIN ROUTES ──────────────────────────────────────────────────────────────
+
+@app.route("/admin")
+def admin_page():
+    return render_template("admin.html")
+
+
+@app.route("/admin/login", methods=["POST"])
+def admin_login():
+    data = request.get_json(force=True)
+    if data.get("password") == ADMIN_PASSWORD:
+        return jsonify({"status": "OK"})
+    return jsonify({"status": "ERROR", "message": "Wrong password"}), 401
+
+
+@app.route("/admin/agents", methods=["GET"])
+def api_get_agents():
+    return jsonify(load_agents())
+
+
+@app.route("/admin/agents", methods=["POST"])
+def api_add_agent():
+    data = request.get_json(force=True)
+    name = str(data.get("name", "")).strip().upper()
+    if not name:
+        return jsonify({"status": "ERROR", "message": "Name is required"}), 400
+    agents = load_agents()
+    if name in agents:
+        return jsonify({"status": "ERROR", "message": f"{name} already exists"}), 400
+    agents.append(name)
+    save_agents(agents)
+    return jsonify({"status": "OK", "agents": load_agents()})
+
+
+@app.route("/admin/agents/<name>", methods=["DELETE"])
+def api_delete_agent(name):
+    name   = name.upper()
+    agents = load_agents()
+    if name not in agents:
+        return jsonify({"status": "ERROR", "message": "Agent not found"}), 404
+    agents.remove(name)
+    save_agents(agents)
+    return jsonify({"status": "OK", "agents": load_agents()})
+
+
+@app.route("/admin/live-status")
+def admin_live_status():
+    agents = load_agents()
+    today  = date.today().isoformat()
+    rows   = read_all_rows()
+
+    data = {a: {"last_action": None, "login_time": None, "timeline": [], "photo": ""} for a in agents}
+
+    for row in rows:
+        try:
+            ts     = datetime.fromisoformat(row["TIMESTAMP"])
+            if ts.date().isoformat() != today:
+                continue
+            agent  = row["AGENT"].strip().upper()
+            action = row["ACTION"].upper()
+            photo  = row.get("PHOTO", "")
+            if agent not in data:
+                data[agent] = {"last_action": None, "login_time": None, "timeline": [], "photo": ""}
+            data[agent]["last_action"] = action
+            data[agent]["timeline"].append({"action": action, "time": ts.strftime("%H:%M")})
+            if action == "LOGIN" and not data[agent]["login_time"]:
+                data[agent]["login_time"] = ts.strftime("%H:%M")
+                if photo and photo not in ("[photo]", ""):
+                    data[agent]["photo"] = photo
+        except Exception:
+            continue
+
+    result = []
+    for agent in agents:
+        d = data.get(agent, {"last_action": None, "login_time": None, "timeline": [], "photo": ""})
+        result.append({
+            "agent":       agent,
+            "last_action": d["last_action"] or "NOT IN",
+            "login_time":  d["login_time"]  or "—",
+            "timeline":    d["timeline"],
+            "photo":       d.get("photo", ""),
+        })
+    return jsonify(result)
+
+
+@app.route("/admin/report")
+def admin_report():
+    range_type = request.args.get("range", "today")
+    from_date  = request.args.get("from",  "")
+    to_date    = request.args.get("to",    "")
+    rows       = filter_daily_rows(range_type, from_date, to_date)
+    summary    = generate_period_summary(rows)
+    return jsonify({"rows": rows, "summary": summary})
+
+
+@app.route("/admin/agent-records/<agent>")
+def agent_all_dates(agent):
+    agent = agent.upper()
+    rows  = read_all_rows()
+    dates: dict[str, int] = {}
+    for row in rows:
+        if row["AGENT"].strip().upper() != agent:
+            continue
+        try:
+            ts       = datetime.fromisoformat(row["TIMESTAMP"])
+            date_str = ts.strftime("%Y-%m-%d")
+            dates[date_str] = dates.get(date_str, 0) + 1
+        except Exception:
+            continue
+    return jsonify({"agent": agent, "dates": dates})
+
+
+@app.route("/admin/agent-records/<agent>/<date_str>")
+def agent_date_records(agent, date_str):
+    agent = agent.upper()
+    rows  = read_all_rows()
+    result = []
+    for row in rows:
+        if row["AGENT"].strip().upper() != agent:
+            continue
+        try:
+            ts = datetime.fromisoformat(row["TIMESTAMP"])
+            if ts.strftime("%Y-%m-%d") != date_str:
+                continue
+            result.append({
+                "timestamp":  row["TIMESTAMP"],
+                "action":     row["ACTION"],
+                "leave_date": row.get("LEAVE_DATE", ""),
+                "photo":      row.get("PHOTO", ""),
+                "source":     row.get("SOURCE", ""),
+            })
+        except Exception:
+            continue
+    return jsonify(result)
+
+
+@app.route("/admin/records", methods=["POST"])
+def admin_add_record():
+    data       = request.get_json(force=True)
+    agent      = str(data.get("agent", "")).strip().upper()
+    action     = str(data.get("action", "")).upper()
+    timestamp  = data.get("timestamp", datetime.now().isoformat())
+    leave_date = data.get("leave_date", "")
+    photo      = data.get("photo", "")
+
+    if not agent or not action:
+        return jsonify({"status": "ERROR", "message": "Missing agent or action"}), 400
+
+    photo_file = ""
+    if photo and action == "LOGIN":
+        photo_file = save_photo(agent, timestamp, photo)
+
+    append_row([timestamp, agent, action, leave_date, photo_file, "ADMIN"])
+    return jsonify({"status": "OK"})
+
+
+@app.route("/admin/records/<agent>/<path:timestamp>", methods=["DELETE"])
+def admin_delete_record(agent, timestamp):
+    agent    = agent.upper()
+    rows     = read_all_rows()
+    new_rows = [r for r in rows
+                if not (r["AGENT"].strip().upper() == agent
+                        and r["TIMESTAMP"] == timestamp)]
+    if len(new_rows) == len(rows):
+        return jsonify({"status": "ERROR", "message": "Record not found"}), 404
+    with open(DATA_FILE, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["TIMESTAMP","AGENT","ACTION","LEAVE_DATE","PHOTO","SOURCE"])
+        writer.writeheader()
+        writer.writerows(new_rows)
+    return jsonify({"status": "OK"})
+
+
+@app.route("/admin/photo-base64/<path:filename>")
+def photo_base64_endpoint(filename):
+    filepath = os.path.join(PHOTOS_DIR, filename)
+    if not os.path.exists(filepath):
+        return jsonify({"error": "Not found"}), 404
+    with open(filepath, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return jsonify({"base64": f"data:image/jpeg;base64,{b64}", "filename": filename})
+
+
+@app.route("/admin/export")
+def admin_export():
+    range_type = request.args.get("range", "today")
+    from_date  = request.args.get("from",  "")
+    to_date    = request.args.get("to",    "")
+    rows       = filter_daily_rows(range_type, from_date, to_date)
+    summary    = generate_period_summary(rows)
+
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        pd.DataFrame(rows).to_excel(writer,    index=False, sheet_name="Detail")
+        pd.DataFrame(summary).to_excel(writer, index=False, sheet_name="Summary")
+    buf.seek(0)
+    fname = f"aks_attendance_{range_type}.xlsx"
+    if range_type == "custom" and from_date and to_date:
+        fname = f"aks_attendance_{from_date}_to_{to_date}.xlsx"
+    return send_file(buf, as_attachment=True, download_name=fname,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 # ─── ENTRY POINT ───────────────────────────────────────────────────────────────

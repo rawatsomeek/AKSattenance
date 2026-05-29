@@ -215,10 +215,10 @@
 
   <script>
     // ── Config ────────────────────────────────────────────────────────────────
-    const BACKEND_BASE   = "const BACKEND_BASE = "http://192.168.1.7:5001";";          // empty = same origin; or "http://localhost:5000"
-    const ATTENDANCE_URL = BACKEND_BASE + "/attendance";
-    const TOKEN_API      = BACKEND_BASE + "/generate-token";
-    const QR_SERVICE     = "https://quickchart.io/qr?size=240&text=";
+    // NETWORK_BASE auto-detected from Flask at render time — no hardcoding needed
+    const NETWORK_BASE   = "http://{{ server_ip }}:{{ server_port }}";
+    const ATTENDANCE_URL = NETWORK_BASE + "/attendance";
+    const TOKEN_API      = "/generate-token";   // same-origin — always reachable
 
     let countdown = 20;
     let refreshing = false;
@@ -237,11 +237,11 @@
         const token = data.token;
 
         const fullUrl = ATTENDANCE_URL + "?token=" + token;
-        const qrUrl   = QR_SERVICE + encodeURIComponent(fullUrl);
 
         img.onload  = () => img.classList.remove("loading");
         img.onerror = () => img.classList.remove("loading");
-        img.src     = qrUrl;
+        // QR generated locally — no external service needed
+        img.src = "/qr-image?text=" + encodeURIComponent(fullUrl);
 
       } catch (err) {
         console.error("Token fetch error:", err);
