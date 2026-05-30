@@ -58,7 +58,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
-TOKEN_VALIDITY_SEC   = 20
+TOKEN_VALIDITY_SEC   = 30
 DATA_FILE            = "attendance_data.csv"
 COLORS_FILE          = "agent_colors.json"
 AGENTS_FILE          = "agents.json"
