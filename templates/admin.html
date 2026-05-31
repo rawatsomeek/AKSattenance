@@ -355,6 +355,57 @@
     }
     .add-entry-field select:focus,
     .add-entry-field input:focus { border-color:var(--gold); }
+
+    /* ── MOBILE HEADER ── */
+    #mobileHeader {
+      display:none; position:fixed; top:0; left:0; right:0; z-index:200;
+      background:var(--card); border-bottom:1px solid var(--border);
+      padding:13px 18px; align-items:center; justify-content:space-between;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    }
+    .mh-brand   { font-family:'Playfair Display',serif; color:var(--gold); font-size:1.1rem; }
+    .mh-section { font-size:.68rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; }
+
+    /* ── BOTTOM NAV ── */
+    #bottomNav {
+      display:none; position:fixed; bottom:0; left:0; right:0; z-index:200;
+      background:var(--card); border-top:1px solid var(--border);
+      overflow-x:auto; -webkit-overflow-scrolling:touch;
+      padding-bottom:env(safe-area-inset-bottom, 0px);
+      scrollbar-width:none;
+    }
+    #bottomNav::-webkit-scrollbar { display:none; }
+    .bn-inner { display:flex; min-width:max-content; }
+    .bn-item {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:10px 16px 8px; cursor:pointer; color:var(--muted);
+      font-size:.58rem; letter-spacing:.05em; text-transform:uppercase;
+      gap:3px; transition:color .15s; min-width:64px; user-select:none;
+    }
+    .bn-icon { font-size:1.25rem; line-height:1; }
+    .bn-item.active { color:var(--gold); }
+    .bn-item:active { opacity:.7; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      #sidebar { display:none !important; }
+      #main { margin-left:0 !important; padding:68px 14px 76px; }
+      #mobileHeader { display:flex; }
+      #bottomNav { display:block; }
+
+      .login-box { width:calc(100vw - 32px); padding:28px 20px; }
+
+      .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+      .stat-card { min-width:unset; }
+
+      .agent-grid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+
+      .sec-header { flex-direction:column; align-items:flex-start; }
+
+      .agent-list-wrap { flex-direction:column; }
+
+      .range-form { flex-direction:column; }
+    }
   </style>
 </head>
 <body>
@@ -373,6 +424,13 @@
 
 <!-- ── ADMIN APP ── -->
 <div id="adminApp">
+
+  <!-- Mobile top header -->
+  <div id="mobileHeader">
+    <div class="mh-brand">AKS Admin</div>
+    <div class="mh-section" id="mhSection">Dashboard</div>
+  </div>
+
   <div class="layout">
 
     <!-- SIDEBAR -->
@@ -607,6 +665,37 @@
 
     </main>
   </div>
+
+  <!-- Bottom nav (mobile only) -->
+  <div id="bottomNav">
+    <div class="bn-inner">
+      <div class="bn-item active" id="bn-dashboard" onclick="showSection('dashboard')">
+        <span class="bn-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="bn-item" id="bn-daily" onclick="showSection('daily')">
+        <span class="bn-icon">📅</span><span>Daily</span>
+      </div>
+      <div class="bn-item" id="bn-monthly" onclick="showSection('monthly')">
+        <span class="bn-icon">📆</span><span>Monthly</span>
+      </div>
+      <div class="bn-item" id="bn-quarterly" onclick="showSection('quarterly')">
+        <span class="bn-icon">🗓️</span><span>Quarterly</span>
+      </div>
+      <div class="bn-item" id="bn-yearly" onclick="showSection('yearly')">
+        <span class="bn-icon">📈</span><span>Yearly</span>
+      </div>
+      <div class="bn-item" id="bn-custom" onclick="showSection('custom')">
+        <span class="bn-icon">🔍</span><span>Custom</span>
+      </div>
+      <div class="bn-item" id="bn-agents" onclick="showSection('agents')">
+        <span class="bn-icon">👥</span><span>Agents</span>
+      </div>
+      <div class="bn-item" id="bn-records" onclick="showSection('records')">
+        <span class="bn-icon">🗂️</span><span>Records</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -658,11 +747,26 @@ function initApp() {
 }
 
 // ── NAVIGATION ──────────────────────────────────────────────────────────────────
+const SECTION_LABELS = {
+  dashboard:"Dashboard", agents:"Agents", daily:"Daily", monthly:"Monthly",
+  quarterly:"Quarterly", yearly:"Yearly", custom:"Custom Range", records:"Agent Records"
+};
+
 function showSection(name) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll(".sb-item").forEach(i => i.classList.remove("active"));
+  document.querySelectorAll(".bn-item").forEach(i => i.classList.remove("active"));
+
   document.getElementById("sec-" + name).classList.add("active");
   document.getElementById("nav-" + name).classList.add("active");
+  const bnItem = document.getElementById("bn-" + name);
+  if (bnItem) {
+    bnItem.classList.add("active");
+    bnItem.scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
+  }
+
+  const mhSection = document.getElementById("mhSection");
+  if (mhSection) mhSection.innerText = SECTION_LABELS[name] || name;
 
   if (name === "dashboard")  loadDashboard();
   if (name === "agents")     loadAgents();
