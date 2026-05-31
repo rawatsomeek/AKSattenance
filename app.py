@@ -28,7 +28,7 @@ import os
 import io
 import socket
 import base64
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, timezone, timedelta
 import pandas as pd
 import qrcode
 
@@ -69,14 +69,6 @@ PHOTOS_DIR           = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 token_cache: dict[str, float] = {}   # token → expiry_timestamp
 cache_lock  = threading.Lock()
 
-AGENT_LIST = ["ANSHIKA", "IQRA", "KAIF", "RUCHIT", "SHREYA"]
-
-AGENT_COLORS_DEFAULT = {
-    "ANSHIKA": "#8FD3E8",
-    "SHREYA":  "#F7B6D2",
-    "KAIF":    "#4CAF50",
-    "RUCHIT":  "#FFA726",
-}
 
 # ─── TOKEN HELPERS ─────────────────────────────────────────────────────────────
 
@@ -125,9 +117,8 @@ def load_agents_data() -> list:
             save_agents_data(migrated)
             return migrated
         return data
-    defaults = [{"name": n, "email": "", "phone": "", "pin": "0000"} for n in AGENT_LIST]
-    save_agents_data(defaults)
-    return defaults
+    save_agents_data([])
+    return []
 
 
 def save_agents_data(agents: list):
@@ -182,34 +173,12 @@ def save_photo(agent: str, timestamp: str, photo_b64: str) -> str:
     return filename
 
 
-def get_agent_color(agent: str) -> str:
-    agent = agent.upper()
-    if agent in AGENT_COLORS_DEFAULT:
-        return AGENT_COLORS_DEFAULT[agent]
-
-    # load / create persistent color file
-    colors = {}
-    if os.path.exists(COLORS_FILE):
-        with open(COLORS_FILE, "r") as f:
-            colors = json.load(f)
-
-    if agent not in colors:
-        import random
-        r = random.randint(120, 254)
-        g = random.randint(120, 254)
-        b = random.randint(120, 254)
-        colors[agent] = f"#{r:02x}{g:02x}{b:02x}"
-        with open(COLORS_FILE, "w") as f:
-            json.dump(colors, f, indent=2)
-
-    return colors[agent]
-
 
 # ─── BUSINESS LOGIC ────────────────────────────────────────────────────────────
 
 def get_last_action_today(agent: str) -> str | None:
     rows   = read_all_rows()
-    today  = date.today().isoformat()
+    today  = datetime.now(IST).date().isoformat()
     last   = None
 
     for row in rows:
@@ -511,7 +480,7 @@ def generate_period_summary(daily_rows: list[dict]) -> list[dict]:
 
 def filter_daily_rows(range_type: str, from_date: str = "", to_date: str = "") -> list[dict]:
     daily_calc = generate_daily_calc()
-    today      = date.today()
+    today      = datetime.now(IST).date()
 
     if range_type == "today":
         target = today.strftime("%d-%m-%Y")
@@ -751,7 +720,7 @@ def api_delete_agent(name):
 @app.route("/admin/live-status")
 def admin_live_status():
     agents = load_agents()
-    today  = date.today().isoformat()
+    today  = datetime.now(IST).date().isoformat()
     rows   = read_all_rows()
 
     data = {a: {"last_action": None, "login_time": None, "timeline": [], "photo": ""} for a in agents}
@@ -1001,7 +970,7 @@ def agent_data(agent):
     agent_upper = agent.strip().upper()
     if agent_upper not in load_agents():
         return jsonify({"status": "UNAUTHORIZED", "message": "Your account has been removed. Please contact admin."}), 403
-    today = date.today()
+    today = datetime.now(IST).date()
     all_rows    = read_all_rows()
 
     today_timeline = []
