@@ -446,10 +446,27 @@
           <div class="agent-list-box">
             <h3>Current Agents</h3>
             <div id="agentListRows"><div class="loader-wrap">Loading…</div></div>
-            <div class="add-form">
-              <input type="text" id="newAgentName" placeholder="New agent name"
-                     onkeydown="if(event.key==='Enter')addAgent()">
-              <button class="btn btn-gold" onclick="addAgent()">+ Add</button>
+          </div>
+          <div class="agent-list-box">
+            <h3>Add New Agent</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div class="add-entry-field">
+                <label>Name *</label>
+                <input type="text" id="newAgentName" placeholder="e.g. SHREYA" onkeydown="if(event.key==='Enter')addAgent()">
+              </div>
+              <div class="add-entry-field">
+                <label>Phone</label>
+                <input type="tel" id="newAgentPhone" placeholder="e.g. 9876543210">
+              </div>
+              <div class="add-entry-field">
+                <label>Email</label>
+                <input type="email" id="newAgentEmail" placeholder="e.g. agent@email.com">
+              </div>
+              <div class="add-entry-field">
+                <label>PIN * (digits only)</label>
+                <input type="text" id="newAgentPin" placeholder="e.g. 1234" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+              </div>
+              <button class="btn btn-gold" onclick="addAgent()" style="margin-top:4px;">+ Add Agent</button>
             </div>
             <div id="addErr"></div>
           </div>
@@ -738,30 +755,56 @@ function renderAgentList(agents) {
   const container = document.getElementById("agentListRows");
   if (!agents.length) { container.innerHTML = '<div class="empty">No agents added yet.</div>'; return; }
   container.innerHTML = agents.map(a => `
-    <div class="agent-row">
-      <span class="agent-row-name">${a}</span>
-      <button class="del-btn" onclick="deleteAgent('${a}')">Delete</button>
+    <div class="agent-row" style="flex-wrap:wrap;gap:6px;padding:12px 0;align-items:flex-start;">
+      <div style="flex:1;min-width:120px;">
+        <div class="agent-row-name">${a.name}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">
+          ${a.phone ? '📞 '+a.phone : ''} ${a.email ? '✉ '+a.email : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="del-btn" style="color:var(--blue);border-color:rgba(58,122,191,.3);"
+          data-name="${a.name}" onclick="resetPin(this.dataset.name)">Reset PIN</button>
+        <button class="del-btn" data-name="${a.name}"
+          onclick="deleteAgent(this.dataset.name)">Delete</button>
+      </div>
     </div>`).join("");
 }
 
 async function addAgent() {
-  const input = document.getElementById("newAgentName");
   const err   = document.getElementById("addErr");
-  const name  = input.value.trim();
+  const name  = document.getElementById("newAgentName").value.trim();
+  const phone = document.getElementById("newAgentPhone").value.trim();
+  const email = document.getElementById("newAgentEmail").value.trim();
+  const pin   = document.getElementById("newAgentPin").value.trim();
   err.innerText = "";
-  if (!name) { err.innerText = "Please enter a name"; return; }
+  if (!name) { err.innerText = "Name is required"; return; }
+  if (!pin)  { err.innerText = "PIN is required";  return; }
   const res  = await fetch("/admin/agents", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({name})
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({name, phone, email, pin})
   });
   const data = await res.json();
   if (data.status === "OK") {
-    input.value = "";
+    ["newAgentName","newAgentPhone","newAgentEmail","newAgentPin"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
     renderAgentList(data.agents);
   } else {
     err.innerText = data.message;
   }
+}
+
+async function resetPin(name) {
+  const pin = prompt(`Set new PIN for ${name} (digits only):`);
+  if (pin === null) return;
+  if (!pin || !/^\d+$/.test(pin)) { alert("PIN must be digits only"); return; }
+  const res  = await fetch(`/admin/agents/${name}/pin`, {
+    method: "PUT", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({pin})
+  });
+  const data = await res.json();
+  alert(data.status === "OK" ? `✅ PIN updated for ${name}` : (data.message || "Error"));
 }
 
 async function deleteAgent(name) {
@@ -912,7 +955,7 @@ let calAgent = "", calYear = new Date().getFullYear(),
 async function loadRecords() {
   const agents = await (await fetch("/admin/agents")).json();
   document.getElementById("recAgentPills").innerHTML = agents.map(a =>
-    `<button class="agent-pill" id="pill-${a}" onclick="selectRecAgent('${a}')">${a}</button>`
+    `<button class="agent-pill" id="pill-${a.name}" onclick="selectRecAgent('${a.name}')">${a.name}</button>`
   ).join("") || '<span style="color:var(--muted);font-size:.85rem">No agents found</span>';
 }
 
@@ -1144,6 +1187,9 @@ async function deleteRecord(agent, timestamp) {
     if (calSelectedDate) selectCalDate(calSelectedDate);
   } else alert(data.message || "Error");
 }
+
+// ── Keep server awake (every 5 sec) ────────────────────────────────────────────
+setInterval(() => fetch('/ping').catch(() => {}), 5000);
 
 // ── BOOT ───────────────────────────────────────────────────────────────────────
 checkAuth();

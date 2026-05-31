@@ -516,6 +516,9 @@
       reader.readAsDataURL(input.files[0]);
     }
 
+    // ── Keep server awake (every 5 sec) ──────────────────────────────────────
+    setInterval(() => fetch('/ping').catch(() => {}), 5000);
+
     // ── Submit ────────────────────────────────────────────────────────────────
     async function submitAttendance() {
       const error  = document.getElementById("error");

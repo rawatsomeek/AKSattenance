@@ -260,6 +260,9 @@
       if (countdown <= 0) loadQR();
     }, 1000);
 
+    // ── Keep server awake (every 5 sec) ──────────────────────────────────────
+    setInterval(() => fetch('/ping').catch(() => {}), 5000);
+
     // ── First load ────────────────────────────────────────────────────────────
     loadQR();
   </script>

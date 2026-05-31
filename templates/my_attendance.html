@@ -24,62 +24,73 @@
       background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(184,146,63,0.10) 0%, transparent 65%);
       pointer-events: none;
     }
-
     .page { max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
 
-    /* Header */
-    .brand { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--gold); text-align:center; }
-    .tagline { font-size:.68rem; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-top:3px; margin-bottom:28px; }
+    .brand   { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--gold); text-align:center; }
+    .tagline { font-size:.68rem; color:var(--muted); letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-top:3px; margin-bottom:8px; }
+    .live-time-bar { text-align:center; font-size:.72rem; color:var(--muted); margin-bottom:24px; }
 
-    /* Agent selection */
-    .select-title { font-size:.75rem; color:var(--muted); letter-spacing:.18em; text-transform:uppercase; text-align:center; margin-bottom:16px; }
-    .agent-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
-    .agent-btn {
-      background:var(--card); border:1px solid var(--border); border-radius:14px;
-      padding:18px 12px; cursor:pointer; font-family:inherit; transition:all .15s;
-      display:flex; flex-direction:column; align-items:center; gap:8px;
+    /* ── Login card ── */
+    .login-card {
+      background:var(--card); border:1px solid var(--border); border-radius:18px;
+      padding:28px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.08);
     }
-    .agent-btn:hover { border-color:var(--gold); background:rgba(201,168,76,.07); }
-    .agent-initials {
-      width:48px; height:48px; border-radius:50%;
-      background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.3);
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--gold);
+    .login-title { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--gold); margin-bottom:4px; }
+    .login-sub   { font-size:.72rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:24px; }
+    .field { margin-bottom:14px; }
+    .field label {
+      display:block; font-size:.7rem; letter-spacing:.15em; text-transform:uppercase;
+      color:var(--muted); margin-bottom:6px; font-weight:500;
     }
-    .agent-btn-name { font-size:.85rem; font-weight:600; color:var(--text); }
+    .field input {
+      width:100%; padding:12px 14px; background:var(--card2);
+      border:1px solid rgba(0,0,0,0.12); border-radius:10px;
+      color:var(--text); font-family:inherit; font-size:.95rem;
+      outline:none; transition:border-color .2s;
+    }
+    .field input:focus { border-color:var(--gold); }
+    .login-btn {
+      width:100%; padding:13px; border:none; border-radius:12px;
+      background:linear-gradient(135deg,var(--gold),#a87a28);
+      color:#000; font-weight:700; font-size:.95rem; cursor:pointer;
+      font-family:inherit; letter-spacing:.04em; margin-top:6px;
+    }
+    #loginErr { color:var(--red); font-size:.82rem; margin-top:10px; min-height:16px; }
 
-    /* Back button */
-    .back-btn {
+    /* ── Top bar ── */
+    .top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .action-btn {
       background:none; border:1px solid var(--border); color:var(--muted);
       border-radius:8px; padding:7px 14px; font-family:inherit; font-size:.8rem;
-      cursor:pointer; margin-bottom:20px; transition:all .15s;
+      cursor:pointer; transition:all .15s;
     }
-    .back-btn:hover { border-color:var(--gold); color:var(--gold); }
+    .action-btn:hover { border-color:var(--gold); color:var(--gold); }
+    .action-btn.danger:hover { border-color:var(--red); color:var(--red); }
 
-    /* Status card */
+    /* ── Status card ── */
     .status-card {
       background:var(--card); border:1px solid var(--border); border-radius:16px;
       padding:20px; margin-bottom:16px; border-left:4px solid var(--muted);
-      transition:border-left-color .3s;
+      transition:border-left-color .3s; box-shadow:0 2px 10px rgba(0,0,0,0.06);
     }
-    .status-card.in     { border-left-color:var(--green); }
-    .status-card.break  { border-left-color:var(--orange); }
-    .status-card.out    { border-left-color:var(--red); }
-    .status-card.leave  { border-left-color:var(--blue); }
+    .status-card.in    { border-left-color:var(--green); }
+    .status-card.break { border-left-color:var(--orange); }
+    .status-card.out   { border-left-color:var(--red); }
+    .status-card.leave { border-left-color:var(--blue); }
 
     .agent-greeting { font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:10px; }
     .status-badge {
       display:inline-block; padding:5px 14px; border-radius:20px;
       font-size:.72rem; font-weight:700; letter-spacing:.1em; margin-bottom:8px;
     }
-    .badge-in     { background:rgba(86,201,122,.15); color:var(--green); }
-    .badge-break  { background:rgba(240,168,48,.15);  color:var(--orange); }
-    .badge-out    { background:rgba(224,86,86,.15);   color:var(--red); }
-    .badge-leave  { background:rgba(100,160,255,.12); color:var(--blue); }
-    .badge-notin  { background:rgba(0,0,0,.06); color:var(--muted); }
-    .login-since  { font-size:.78rem; color:var(--muted); }
+    .badge-in    { background:rgba(45,158,74,.12);  color:var(--green); }
+    .badge-break { background:rgba(212,134,14,.12);  color:var(--orange); }
+    .badge-out   { background:rgba(196,64,64,.12);   color:var(--red); }
+    .badge-leave { background:rgba(58,122,191,.12);  color:var(--blue); }
+    .badge-notin { background:rgba(0,0,0,.06);       color:var(--muted); }
+    .login-since { font-size:.78rem; color:var(--muted); }
 
-    /* Timeline */
+    /* ── Timeline ── */
     .section-title {
       font-size:.7rem; color:var(--muted); letter-spacing:.18em;
       text-transform:uppercase; margin-bottom:10px; margin-top:20px;
@@ -90,83 +101,128 @@
       background:var(--card); border-radius:10px; padding:10px 14px;
       border:1px solid rgba(0,0,0,.07);
     }
-    .tl-time  { font-size:.78rem; color:var(--gold-lt); min-width:44px; font-family:monospace; }
-    .tl-action{ font-size:.88rem; font-weight:600; }
-    .tl-empty { font-size:.82rem; color:var(--muted); text-align:center; padding:12px; }
+    .tl-time   { font-size:.78rem; color:var(--gold-lt); min-width:44px; font-family:monospace; }
+    .tl-action { font-size:.88rem; font-weight:600; }
+    .tl-empty  { font-size:.82rem; color:var(--muted); text-align:center; padding:12px; }
 
-    /* Stats grid */
+    /* ── Stats grid ── */
     .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
     .stat-card {
       background:var(--card); border:1px solid var(--border); border-radius:12px;
-      padding:14px; text-align:center;
+      padding:14px; text-align:center; box-shadow:0 1px 6px rgba(0,0,0,0.05);
     }
-    .stat-num   { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--gold-lt); }
+    .stat-num   { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--gold); }
     .stat-label { font-size:.65rem; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-top:3px; }
 
-    /* Records table */
-    .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); margin-top:0; }
+    /* ── Table ── */
+    .table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:12px; background:var(--card); }
     table { width:100%; border-collapse:collapse; font-size:.8rem; }
-    thead tr { background:rgba(201,168,76,.07); }
+    thead tr { background:rgba(184,146,63,.07); }
     th { padding:10px 12px; text-align:left; font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); white-space:nowrap; border-bottom:1px solid var(--border); }
     td { padding:9px 12px; border-bottom:1px solid rgba(0,0,0,.06); white-space:nowrap; }
     tr:last-child td { border-bottom:none; }
 
     .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.65rem; font-weight:700; }
-    .b-full     { background:rgba(86,201,122,.15);  color:var(--green); }
-    .b-half     { background:rgba(255,193,7,.15);   color:#ffc107; }
-    .b-absent   { background:rgba(224,86,86,.15);   color:var(--red); }
-    .b-approval { background:rgba(100,160,255,.12); color:var(--blue); }
+    .b-full     { background:rgba(45,158,74,.12);  color:var(--green); }
+    .b-half     { background:rgba(255,193,7,.15);   color:#c49b00; }
+    .b-absent   { background:rgba(196,64,64,.12);   color:var(--red); }
+    .b-approval { background:rgba(58,122,191,.12);  color:var(--blue); }
 
     .empty { text-align:center; padding:32px; color:var(--muted); font-size:.85rem; }
 
-    .live-time-bar { text-align:center; font-size:.72rem; color:var(--muted); margin-bottom:20px; }
+    /* ── Change PIN modal ── */
+    #changePinModal {
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(248,245,240,0.96);
+      align-items:center; justify-content:center; padding:20px;
+    }
+    #changePinModal.active { display:flex; }
+    .pin-card {
+      background:var(--card); border:1px solid var(--border); border-radius:18px;
+      padding:28px 24px; width:100%; max-width:360px;
+      box-shadow:0 4px 24px rgba(0,0,0,0.10);
+    }
+    .pin-card h3 { font-family:'Playfair Display',serif; color:var(--gold); font-size:1.2rem; margin-bottom:20px; }
+    #pinErr { color:var(--red); font-size:.82rem; margin-top:8px; min-height:16px; }
 
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     .fade { animation:fadeUp .4s ease both; }
   </style>
 </head>
 <body>
+
+<!-- ── Change PIN Modal ── -->
+<div id="changePinModal">
+  <div class="pin-card fade">
+    <h3>Change PIN</h3>
+    <div class="field">
+      <label>Current PIN</label>
+      <input type="text" id="oldPin" maxlength="6" inputmode="numeric" placeholder="Enter current PIN">
+    </div>
+    <div class="field">
+      <label>New PIN</label>
+      <input type="text" id="newPin" maxlength="6" inputmode="numeric" placeholder="Enter new PIN">
+    </div>
+    <div class="field">
+      <label>Confirm New PIN</label>
+      <input type="text" id="confirmPin" maxlength="6" inputmode="numeric" placeholder="Confirm new PIN">
+    </div>
+    <div id="pinErr"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="login-btn" style="flex:1;" onclick="submitChangePin()">Update PIN</button>
+      <button class="action-btn" style="flex:1;padding:13px;" onclick="closeChangePinModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="page">
 
   <div class="brand">AKS Hospitality</div>
   <div class="tagline">My Attendance</div>
   <div class="live-time-bar" id="liveTime">—</div>
 
-  <!-- ── Agent Selection ── -->
-  <div id="agentSelect">
-    <div class="select-title">Who are you?</div>
-    <div class="agent-grid">
-      {% for agent in agents %}
-      <button class="agent-btn" onclick="selectAgent('{{ agent }}')">
-        <div class="agent-initials">{{ agent[0] }}</div>
-        <div class="agent-btn-name">{{ agent }}</div>
-      </button>
-      {% endfor %}
+  <!-- ── Login section ── -->
+  <div id="loginSection">
+    <div class="login-card fade">
+      <div class="login-title">Agent Login</div>
+      <div class="login-sub">Sign in to view your attendance</div>
+      <div class="field">
+        <label>Phone / Email</label>
+        <input type="text" id="identifier" placeholder="Enter your phone or email"
+               onkeydown="if(event.key==='Enter')agentLogin()">
+      </div>
+      <div class="field">
+        <label>PIN</label>
+        <input type="text" id="pinInput" maxlength="6" inputmode="numeric" placeholder="Enter your PIN"
+               onkeydown="if(event.key==='Enter')agentLogin()">
+      </div>
+      <button class="login-btn" onclick="agentLogin()">Login</button>
+      <div id="loginErr"></div>
     </div>
   </div>
 
   <!-- ── Dashboard ── -->
   <div id="dashboard" style="display:none" class="fade">
-    <button class="back-btn" onclick="goBack()">← Change Agent</button>
+    <div class="top-bar">
+      <button class="action-btn" onclick="showChangePinModal()">Change PIN</button>
+      <button class="action-btn danger" onclick="agentLogout()">← Logout</button>
+    </div>
 
-    <!-- Status -->
     <div class="status-card" id="statusCard">
       <div class="agent-greeting" id="agentGreeting">—</div>
       <div class="status-badge" id="statusBadge">—</div>
       <div class="login-since" id="loginSince"></div>
     </div>
 
-    <!-- Today's timeline -->
     <div class="section-title">Today's Activity</div>
     <div class="timeline" id="todayTimeline"></div>
 
-    <!-- Monthly stats -->
     <div class="section-title" id="monthLabel">This Month</div>
     <div class="stats-grid" id="statsGrid"></div>
 
-    <!-- Monthly records -->
     <div class="section-title" style="margin-top:20px">This Month's Records</div>
     <div class="table-wrap" id="recordsTable"></div>
+    <div style="height:32px;"></div>
   </div>
 
 </div>
@@ -181,22 +237,101 @@
   }
   tick(); setInterval(tick, 1000);
 
-  function goBack() {
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById("agentSelect").style.display = "block";
+  // ── AUTH ──────────────────────────────────────────────────────────────────────
+  function checkAuth() {
+    const session = JSON.parse(localStorage.getItem("aks_my_agent") || "null");
+    if (session && session.agent) {
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      loadAgentData(session.agent);
+    }
   }
 
-  async function selectAgent(agent) {
-    document.getElementById("agentSelect").style.display = "none";
-    document.getElementById("dashboard").style.display   = "block";
+  async function agentLogin() {
+    const identifier = document.getElementById("identifier").value.trim();
+    const pin        = document.getElementById("pinInput").value.trim();
+    const err        = document.getElementById("loginErr");
+    err.innerText = "";
+    if (!identifier || !pin) { err.innerText = "Please enter your phone/email and PIN"; return; }
+    try {
+      const res  = await fetch("/agent-login", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({identifier, pin})
+      });
+      const data = await res.json();
+      if (data.status === "OK") {
+        localStorage.setItem("aks_my_agent", JSON.stringify({agent: data.agent}));
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadAgentData(data.agent);
+      } else {
+        err.innerText = data.message || "Login failed";
+      }
+    } catch(e) {
+      err.innerText = "Connection error — please try again";
+    }
+  }
 
+  function agentLogout() {
+    localStorage.removeItem("aks_my_agent");
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("identifier").value = "";
+    document.getElementById("pinInput").value = "";
+    document.getElementById("loginErr").innerText = "";
+  }
+
+  // ── CHANGE PIN ────────────────────────────────────────────────────────────────
+  function showChangePinModal() {
+    document.getElementById("oldPin").value = "";
+    document.getElementById("newPin").value = "";
+    document.getElementById("confirmPin").value = "";
+    document.getElementById("pinErr").innerText = "";
+    document.getElementById("changePinModal").classList.add("active");
+  }
+
+  function closeChangePinModal() {
+    document.getElementById("changePinModal").classList.remove("active");
+  }
+
+  async function submitChangePin() {
+    const oldPin  = document.getElementById("oldPin").value.trim();
+    const newPin  = document.getElementById("newPin").value.trim();
+    const confirm = document.getElementById("confirmPin").value.trim();
+    const err     = document.getElementById("pinErr");
+    err.innerText = "";
+    if (!oldPin || !newPin || !confirm) { err.innerText = "Please fill all fields"; return; }
+    if (newPin !== confirm)             { err.innerText = "New PINs do not match"; return; }
+    if (!/^\d+$/.test(newPin))          { err.innerText = "PIN must be digits only"; return; }
+
+    const session = JSON.parse(localStorage.getItem("aks_my_agent") || "null");
+    if (!session) { err.innerText = "Session expired — please login again"; return; }
+
+    try {
+      const res  = await fetch("/agent-change-pin", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({agent: session.agent, old_pin: oldPin, new_pin: newPin})
+      });
+      const data = await res.json();
+      if (data.status === "OK") {
+        closeChangePinModal();
+        alert("✅ PIN updated successfully!");
+      } else {
+        err.innerText = data.message || "Error updating PIN";
+      }
+    } catch(e) {
+      err.innerText = "Connection error";
+    }
+  }
+
+  // ── DATA ──────────────────────────────────────────────────────────────────────
+  async function loadAgentData(agent) {
     const res  = await fetch(`/agent-data/${agent}`);
     const data = await res.json();
     renderDashboard(data);
   }
 
   function renderDashboard(data) {
-    // Status card
     const sc    = document.getElementById("statusCard");
     const badge = document.getElementById("statusBadge");
     const s     = data.today_status;
@@ -216,22 +351,17 @@
     const loginEntry = data.today_timeline.find(t => t.action === "LOGIN");
     document.getElementById("loginSince").innerText = loginEntry ? `Login: ${loginEntry.time}` : "";
 
-    // Timeline
     const tl = document.getElementById("todayTimeline");
-    if (!data.today_timeline.length) {
-      tl.innerHTML = `<div class="tl-empty">No activity recorded today</div>`;
-    } else {
-      tl.innerHTML = data.today_timeline.map(t =>
-        `<div class="tl-row"><span class="tl-time">${t.time}</span><span class="tl-action">${t.action}</span></div>`
-      ).join("");
-    }
+    tl.innerHTML = data.today_timeline.length
+      ? data.today_timeline.map(t =>
+          `<div class="tl-row"><span class="tl-time">${t.time}</span><span class="tl-action">${t.action}</span></div>`
+        ).join("")
+      : `<div class="tl-empty">No activity recorded today</div>`;
 
-    // Month label
     const now = new Date();
     const mn  = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     document.getElementById("monthLabel").innerText = `${mn[now.getMonth()]} ${now.getFullYear()}`;
 
-    // Stats
     const ms = data.monthly_summary;
     document.getElementById("statsGrid").innerHTML = `
       <div class="stat-card"><div class="stat-num">${ms.TOTAL_HOURS || 0}</div><div class="stat-label">Total Hours</div></div>
@@ -240,7 +370,6 @@
       <div class="stat-card"><div class="stat-num">${ms.ABSENT_DAYS|| 0}</div><div class="stat-label">Absent Days</div></div>
     `;
 
-    // Records table
     const rt = document.getElementById("recordsTable");
     if (!data.monthly_rows.length) {
       rt.innerHTML = `<div class="empty">No records this month</div>`;
@@ -255,18 +384,22 @@
       };
       rt.innerHTML = `<table>
         <thead><tr><th>Date</th><th>Login</th><th>Logout</th><th>Hours</th><th>Day</th></tr></thead>
-        <tbody>
-          ${data.monthly_rows.map(r => `<tr>
-            <td>${r.DATE}</td>
-            <td>${r.LOGIN_TIME  ? r.LOGIN_TIME.substring(11,16)  : "—"}</td>
-            <td>${r.LOGOUT_TIME ? r.LOGOUT_TIME.substring(11,16) : "—"}</td>
-            <td>${r.TOTAL_LOGIN_HOURS || "—"}</td>
-            <td>${dayBadge(r.DAY_TYPE)}</td>
-          </tr>`).join("")}
-        </tbody>
+        <tbody>${data.monthly_rows.map(r => `<tr>
+          <td>${r.DATE}</td>
+          <td>${r.LOGIN_TIME  ? r.LOGIN_TIME.substring(11,16)  : "—"}</td>
+          <td>${r.LOGOUT_TIME ? r.LOGOUT_TIME.substring(11,16) : "—"}</td>
+          <td>${r.TOTAL_LOGIN_HOURS || "—"}</td>
+          <td>${dayBadge(r.DAY_TYPE)}</td>
+        </tr>`).join("")}</tbody>
       </table>`;
     }
   }
+
+  // ── Keep server awake (every 5 sec) ──────────────────────────────────────────
+  setInterval(() => fetch('/ping').catch(() => {}), 5000);
+
+  // ── Boot ─────────────────────────────────────────────────────────────────────
+  checkAuth();
 </script>
 </body>
 </html>

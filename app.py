@@ -115,17 +115,30 @@ def _purge_expired():
 
 # ─── AGENT HELPERS ─────────────────────────────────────────────────────────────
 
-def load_agents() -> list:
+def load_agents_data() -> list:
+    """Returns list of agent dicts: {name, email, phone, pin}"""
     if os.path.exists(AGENTS_FILE):
         with open(AGENTS_FILE, "r") as f:
-            return json.load(f)
-    save_agents(AGENT_LIST)
-    return list(AGENT_LIST)
+            data = json.load(f)
+        if data and isinstance(data[0], str):
+            migrated = [{"name": n, "email": "", "phone": "", "pin": "0000"} for n in data]
+            save_agents_data(migrated)
+            return migrated
+        return data
+    defaults = [{"name": n, "email": "", "phone": "", "pin": "0000"} for n in AGENT_LIST]
+    save_agents_data(defaults)
+    return defaults
 
 
-def save_agents(agents: list):
+def save_agents_data(agents: list):
+    agents_sorted = sorted(agents, key=lambda x: x["name"])
     with open(AGENTS_FILE, "w") as f:
-        json.dump(sorted(set(a.upper() for a in agents)), f, indent=2)
+        json.dump(agents_sorted, f, indent=2)
+
+
+def load_agents() -> list:
+    """Returns just agent names — for templates and CSV logic."""
+    return [a["name"] for a in load_agents_data()]
 
 
 # ─── DATA HELPERS ──────────────────────────────────────────────────────────────
@@ -688,33 +701,41 @@ def admin_login():
 
 @app.route("/admin/agents", methods=["GET"])
 def api_get_agents():
-    return jsonify(load_agents())
+    agents = load_agents_data()
+    return jsonify([{"name": a["name"], "email": a.get("email",""), "phone": a.get("phone","")} for a in agents])
 
 
 @app.route("/admin/agents", methods=["POST"])
 def api_add_agent():
-    data = request.get_json(force=True)
-    name = str(data.get("name", "")).strip().upper()
+    data  = request.get_json(force=True)
+    name  = str(data.get("name",  "")).strip().upper()
+    phone = str(data.get("phone", "")).strip()
+    email = str(data.get("email", "")).strip()
+    pin   = str(data.get("pin",   "")).strip()
+
     if not name:
         return jsonify({"status": "ERROR", "message": "Name is required"}), 400
-    agents = load_agents()
-    if name in agents:
+    if not pin or not pin.isdigit():
+        return jsonify({"status": "ERROR", "message": "PIN is required (digits only)"}), 400
+
+    agents = load_agents_data()
+    if any(a["name"] == name for a in agents):
         return jsonify({"status": "ERROR", "message": f"{name} already exists"}), 400
-    agents.append(name)
-    save_agents(agents)
-    return jsonify({"status": "OK", "agents": load_agents()})
+
+    agents.append({"name": name, "email": email, "phone": phone, "pin": pin})
+    save_agents_data(agents)
+    return jsonify({"status": "OK", "agents": [{"name": a["name"], "email": a.get("email",""), "phone": a.get("phone","")} for a in load_agents_data()]})
 
 
 @app.route("/admin/agents/<name>", methods=["DELETE"])
 def api_delete_agent(name):
     name   = name.upper()
-    agents = load_agents()
-    if name not in agents:
+    agents = load_agents_data()
+    if not any(a["name"] == name for a in agents):
         return jsonify({"status": "ERROR", "message": "Agent not found"}), 404
-    agents.remove(name)
-    save_agents(agents)
+    agents = [a for a in agents if a["name"] != name]
+    save_agents_data(agents)
 
-    # Hard-delete all records for this agent from CSV
     rows     = read_all_rows()
     new_rows = [r for r in rows if r["AGENT"].strip().upper() != name]
     with open(DATA_FILE, "w", newline="", encoding="utf-8") as f:
@@ -722,7 +743,8 @@ def api_delete_agent(name):
         writer.writeheader()
         writer.writerows(new_rows)
 
-    return jsonify({"status": "OK", "agents": load_agents(),
+    return jsonify({"status": "OK",
+                    "agents": [{"name": a["name"], "email": a.get("email",""), "phone": a.get("phone","")} for a in load_agents_data()],
                     "deleted_records": len(rows) - len(new_rows)})
 
 
@@ -889,7 +911,89 @@ def admin_edit_record(agent, timestamp):
 
 @app.route("/my-attendance")
 def my_attendance_page():
-    return render_template("my_attendance.html", agents=load_agents())
+    return render_template("my_attendance.html")
+
+
+@app.route("/agent-login", methods=["POST"])
+def agent_login():
+    data       = request.get_json(force=True)
+    identifier = str(data.get("identifier", "")).strip()
+    pin        = str(data.get("pin", "")).strip()
+
+    if not identifier or not pin:
+        return jsonify({"status": "ERROR", "message": "Please enter your phone/email and PIN"}), 400
+
+    agents  = load_agents_data()
+    matched = None
+    for a in agents:
+        if (a.get("phone") and a["phone"].strip() == identifier) or \
+           (a.get("email") and a["email"].strip().lower() == identifier.lower()) or \
+           a["name"].upper() == identifier.upper():
+            matched = a
+            break
+
+    if not matched:
+        return jsonify({"status": "ERROR", "message": "Agent not found"}), 401
+    if matched.get("pin", "") != pin:
+        return jsonify({"status": "ERROR", "message": "Incorrect PIN"}), 401
+
+    return jsonify({"status": "OK", "agent": matched["name"]})
+
+
+@app.route("/agent-change-pin", methods=["POST"])
+def agent_change_pin():
+    data       = request.get_json(force=True)
+    agent_name = str(data.get("agent", "")).strip().upper()
+    old_pin    = str(data.get("old_pin", "")).strip()
+    new_pin    = str(data.get("new_pin", "")).strip()
+
+    if not new_pin or not new_pin.isdigit():
+        return jsonify({"status": "ERROR", "message": "New PIN must be digits only"}), 400
+
+    agents = load_agents_data()
+    found  = False
+    for a in agents:
+        if a["name"] == agent_name:
+            if a.get("pin", "") != old_pin:
+                return jsonify({"status": "ERROR", "message": "Current PIN is incorrect"}), 401
+            a["pin"] = new_pin
+            found = True
+            break
+
+    if not found:
+        return jsonify({"status": "ERROR", "message": "Agent not found"}), 404
+
+    save_agents_data(agents)
+    return jsonify({"status": "OK"})
+
+
+@app.route("/admin/agents/<name>/pin", methods=["PUT"])
+def admin_reset_pin(name):
+    data    = request.get_json(force=True)
+    name    = name.upper()
+    new_pin = str(data.get("pin", "")).strip()
+
+    if not new_pin or not new_pin.isdigit():
+        return jsonify({"status": "ERROR", "message": "PIN must be digits only"}), 400
+
+    agents = load_agents_data()
+    found  = False
+    for a in agents:
+        if a["name"] == name:
+            a["pin"] = new_pin
+            found = True
+            break
+
+    if not found:
+        return jsonify({"status": "ERROR", "message": "Agent not found"}), 404
+
+    save_agents_data(agents)
+    return jsonify({"status": "OK"})
+
+
+@app.route("/ping")
+def ping():
+    return jsonify({"ok": True})
 
 
 @app.route("/agent-data/<agent>")
