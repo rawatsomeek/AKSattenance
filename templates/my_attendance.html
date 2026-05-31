@@ -7,12 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:   #b8923f; --gold-lt: #c9a84c;
-      --dark:   #f8f5f0; --card:    #ffffff;
-      --card2:  #f3efe8; --border:  rgba(180,130,30,0.2);
-      --text:   #1a1510; --muted:   #7a6f5e;
-      --green:  #2d9e4a; --red:     #c44040;
-      --orange: #d4860e; --blue:    #3a7abf;
+      --gold:   #1e40af; --gold-lt: #3b82f6;
+      --dark:   #f0f7ff; --card:    #ffffff;
+      --card2:  #e8f0fe; --border:  rgba(30,64,175,0.18);
+      --text:   #0f172a; --muted:   #64748b;
+      --green:  #16a34a; --red:     #dc2626;
+      --orange: #d97706; --blue:    #0284c7;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,7 +21,7 @@
     }
     body::before {
       content: ''; position: fixed; inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(184,146,63,0.10) 0%, transparent 65%);
+      background: radial-gradient(ellipse 60% 50% at 50% 20%, rgba(30,64,175,0.07) 0%, transparent 65%);
       pointer-events: none;
     }
     .page { max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
@@ -51,8 +51,8 @@
     .field input:focus { border-color:var(--gold); }
     .login-btn {
       width:100%; padding:13px; border:none; border-radius:12px;
-      background:linear-gradient(135deg,var(--gold),#a87a28);
-      color:#000; font-weight:700; font-size:.95rem; cursor:pointer;
+      background:linear-gradient(135deg,#2563eb,#1e40af);
+      color:#fff; font-weight:700; font-size:.95rem; cursor:pointer;
       font-family:inherit; letter-spacing:.04em; margin-top:6px;
     }
     #loginErr { color:var(--red); font-size:.82rem; margin-top:10px; min-height:16px; }
@@ -123,7 +123,7 @@
       background:none; border:1px solid var(--border); color:var(--gold);
       border-radius:6px; padding:4px 10px; cursor:pointer; font-size:.85rem; transition:all .15s;
     }
-    .cal-nav-btn:hover { background:rgba(184,146,63,.1); }
+    .cal-nav-btn:hover { background:rgba(30,64,175,.08); }
     .cal-month-label { font-family:'Playfair Display',serif; color:var(--gold); font-size:1rem; }
     .cal-days-hdr { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:4px; }
     .cal-days-hdr span { text-align:center; font-size:.62rem; color:var(--muted); padding:3px 0; }
@@ -133,14 +133,14 @@
       font-size:.78rem; border:1px solid transparent; transition:all .15s;
       position:relative; line-height:1.3;
     }
-    .cal-day:hover { background:rgba(184,146,63,.1); }
+    .cal-day:hover { background:rgba(30,64,175,.08); }
     .cal-day.has-rec::after {
       content:''; display:block; width:5px; height:5px;
       border-radius:50%; background:var(--green); margin:1px auto 0;
     }
     .cal-day.selected { background:var(--gold); color:#000; border-color:var(--gold); font-weight:700; }
     .cal-day.selected::after { background:#000; }
-    .cal-day.today { border-color:rgba(184,146,63,.5); }
+    .cal-day.today { border-color:rgba(30,64,175,.5); }
     .cal-day.blank { cursor:default; }
 
     /* ── Change PIN modal ── */

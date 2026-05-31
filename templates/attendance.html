@@ -7,17 +7,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:    #b8923f;
-      --gold-lt: #c9a84c;
-      --dark:    #f8f5f0;
+      --gold:    #1e40af;
+      --gold-lt: #3b82f6;
+      --dark:    #f0f7ff;
       --card:    #ffffff;
-      --card2:   #f3efe8;
-      --border:  rgba(180,130,30,0.2);
-      --text:    #1a1510;
-      --muted:   #7a6f5e;
-      --blue:    #3a7abf;
-      --err:     #c44040;
-      --ok:      #2d9e4a;
+      --card2:   #e8f0fe;
+      --border:  rgba(30,64,175,0.18);
+      --text:    #0f172a;
+      --muted:   #64748b;
+      --blue:    #0284c7;
+      --err:     #dc2626;
+      --ok:      #16a34a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,7 +37,7 @@
       content: '';
       position: fixed; inset: 0;
       background: radial-gradient(ellipse 60% 50% at 50% 30%,
-        rgba(184,146,63,0.1) 0%, transparent 65%);
+        rgba(30,64,175,0.07) 0%, transparent 65%);
       pointer-events: none;
     }
 
@@ -176,8 +176,8 @@
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--gold) 0%, #a87a28 100%);
-      color: #000;
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      color: #fff;
       margin-top: 8px;
     }
 
@@ -353,7 +353,7 @@
       <div class="tagline">Journey that awakens the soul</div>
       <div class="live-time" id="liveTime">—</div>
       <div class="session-bar" id="sessionBar">
-        Session expires in <strong id="sessionCount">60</strong>s
+        Session expires in <strong id="sessionCount">30</strong>s
       </div>
     </div>
 
@@ -435,7 +435,7 @@
     let capturedPhoto = "";
 
     // ── Session countdown (20 seconds) ───────────────────────────────────────
-    let sessionSec = 60;
+    let sessionSec = 30;
     const sessionBar   = document.getElementById("sessionBar");
     const sessionCount = document.getElementById("sessionCount");
 

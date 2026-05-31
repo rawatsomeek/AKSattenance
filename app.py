@@ -58,7 +58,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
-TOKEN_VALIDITY_SEC   = 60
+TOKEN_VALIDITY_SEC   = 30
 DATA_FILE            = "attendance_data.csv"
 COLORS_FILE          = "agent_colors.json"
 AGENTS_FILE          = "agents.json"
@@ -557,7 +557,7 @@ def save_attendance():
         today_str = datetime.now(IST).date().isoformat()
         if date_val != today_str:
             return jsonify({"status": "ERROR",
-                            "message": "❌ Sirf LEAVE past/future dates ke liye allowed hai"}), 400
+                            "message": "❌ Only LEAVE can be recorded for past or future dates"}), 400
 
     last_action = get_last_action_today(agent)
     check       = is_action_allowed(last_action, new_action)
@@ -831,7 +831,7 @@ def admin_add_record():
             ts_date = datetime.fromisoformat(timestamp).date()
             if ts_date != datetime.now(IST).date():
                 return jsonify({"status": "ERROR",
-                                "message": "❌ Sirf LEAVE past/future dates ke liye allowed hai"}), 400
+                                "message": "❌ Only LEAVE can be recorded for past or future dates"}), 400
         except Exception:
             pass
 

@@ -7,13 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold:    #b8923f;
-      --gold-lt: #c9a84c;
-      --dark:    #f8f5f0;
+      --gold:    #1e40af;
+      --gold-lt: #3b82f6;
+      --dark:    #f0f7ff;
       --card:    #ffffff;
-      --border:  rgba(180,130,30,0.25);
-      --text:    #1a1510;
-      --muted:   #7a6f5e;
+      --border:  rgba(30,64,175,0.18);
+      --text:    #0f172a;
+      --muted:   #64748b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,7 +36,7 @@
       position: fixed;
       inset: 0;
       background: radial-gradient(ellipse 70% 60% at 50% 40%,
-        rgba(184,146,63,0.12) 0%, transparent 70%);
+        rgba(30,64,175,0.07) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -88,8 +88,8 @@
       align-items: center;
       gap: 0;
       box-shadow:
-        0 0 0 1px rgba(180,130,30,0.12),
-        0 8px 32px rgba(0,0,0,0.10);
+        0 0 0 1px rgba(30,64,175,0.12),
+        0 8px 32px rgba(0,0,0,0.08);
     }
 
     .qr-label {
@@ -158,7 +158,7 @@
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      border: 3px solid rgba(201,168,76,0.15);
+      border: 3px solid rgba(30,64,175,0.15);
       border-top-color: var(--gold);
       animation: spin 1s linear infinite;
       flex-shrink: 0;
