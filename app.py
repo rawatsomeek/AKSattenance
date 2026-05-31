@@ -999,7 +999,9 @@ def ping():
 @app.route("/agent-data/<agent>")
 def agent_data(agent):
     agent_upper = agent.strip().upper()
-    today       = date.today()
+    if agent_upper not in load_agents():
+        return jsonify({"status": "UNAUTHORIZED", "message": "Your account has been removed. Please contact admin."}), 403
+    today = date.today()
     all_rows    = read_all_rows()
 
     today_timeline = []

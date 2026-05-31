@@ -327,6 +327,14 @@
   // ── DATA ──────────────────────────────────────────────────────────────────────
   async function loadAgentData(agent) {
     const res  = await fetch(`/agent-data/${agent}`);
+    if (res.status === 403) {
+      const data = await res.json();
+      localStorage.removeItem("aks_my_agent");
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("loginSection").style.display = "block";
+      document.getElementById("loginErr").innerText = "❌ " + (data.message || "You are not authorized.");
+      return;
+    }
     const data = await res.json();
     renderDashboard(data);
   }
