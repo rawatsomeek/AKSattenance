@@ -353,7 +353,7 @@
       <div class="tagline">Journey that awakens the soul</div>
       <div class="live-time" id="liveTime">—</div>
       <div class="session-bar" id="sessionBar">
-        Session expires in <strong id="sessionCount">30</strong>s
+        Session expires in <strong id="sessionCount">60</strong>s
       </div>
     </div>
 
@@ -419,10 +419,23 @@
     const SESSION_TOKEN = "{{ session_token }}";
     const BACKEND_BASE  = "";
 
+    // ── Open in browser if running inside Google Lens / webview ──────────────
+    (function() {
+      const ua = navigator.userAgent || "";
+      const inWebview = /wv\b/i.test(ua) || /\bFB_IAB\b/i.test(ua) ||
+                        ((/Android/i.test(ua)) && !/Chrome\/[0-9]/i.test(ua));
+      if (inWebview) {
+        const bar = document.createElement("div");
+        bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#b8923f;color:#fff;text-align:center;padding:10px 16px;font-size:.85rem;font-family:sans-serif;";
+        bar.innerHTML = '⚠️ Camera may not work here. <a href="' + location.href + '" target="_blank" style="color:#fff;font-weight:700;text-decoration:underline;">Open in Chrome</a>';
+        document.body.prepend(bar);
+      }
+    })();
+
     let capturedPhoto = "";
 
     // ── Session countdown (20 seconds) ───────────────────────────────────────
-    let sessionSec = 30;
+    let sessionSec = 60;
     const sessionBar   = document.getElementById("sessionBar");
     const sessionCount = document.getElementById("sessionCount");
 

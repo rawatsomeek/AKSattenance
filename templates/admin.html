@@ -1269,6 +1269,11 @@ async function addRecord(dateStr) {
   const action = document.getElementById("newAction").value;
   const time   = document.getElementById("newTime").value;
   if (!time) { alert("Please select a time"); return; }
+  const today = new Date().toISOString().split("T")[0];
+  if (action !== "LEAVE" && dateStr !== today) {
+    alert("❌ " + action + " sirf aaj ki date ke liye add ho sakta hai.\nSirf LEAVE past/future dates ke liye allowed hai.");
+    return;
+  }
   const res  = await fetch("/admin/records", {
     method: "POST", headers: {"Content-Type":"application/json"},
     body: JSON.stringify({agent: calAgent, action, timestamp: `${dateStr}T${time}:00`})

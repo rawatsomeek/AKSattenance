@@ -58,7 +58,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 TOKEN_SECRET         = "SOME_SECRET_KEY_123"     # 🔒 Change this in production!
-TOKEN_VALIDITY_SEC   = 30
+TOKEN_VALIDITY_SEC   = 60
 DATA_FILE            = "attendance_data.csv"
 COLORS_FILE          = "agent_colors.json"
 AGENTS_FILE          = "agents.json"
@@ -553,6 +553,12 @@ def save_attendance():
     if not agent or not new_action:
         return jsonify({"status": "ERROR", "message": "❌ Missing agent or action"}), 400
 
+    if new_action != "LEAVE" and date_val:
+        today_str = datetime.now(IST).date().isoformat()
+        if date_val != today_str:
+            return jsonify({"status": "ERROR",
+                            "message": "❌ Sirf LEAVE past/future dates ke liye allowed hai"}), 400
+
     last_action = get_last_action_today(agent)
     check       = is_action_allowed(last_action, new_action)
 
@@ -819,6 +825,15 @@ def admin_add_record():
 
     if not agent or not action:
         return jsonify({"status": "ERROR", "message": "Missing agent or action"}), 400
+
+    if action != "LEAVE":
+        try:
+            ts_date = datetime.fromisoformat(timestamp).date()
+            if ts_date != datetime.now(IST).date():
+                return jsonify({"status": "ERROR",
+                                "message": "❌ Sirf LEAVE past/future dates ke liye allowed hai"}), 400
+        except Exception:
+            pass
 
     photo_file = ""
     if photo and action == "LOGIN":
